@@ -1,0 +1,11 @@
+{
+    "name": "com.white-arrow.game-achievements",
+    "version": "1.0.0",
+    "displayName": "Game Achievements",
+    "description": "Flexible and extensible achievement system for Unity with support for custom handlers, grouped achievements, and persistent state management.",
+    "licensesUrl": "https://github.com/CliffCalist/game-achievements/blob/82e0ab1dc547f9683707d7714b8dc52ef131ad7d/LICENSE",
+    "author": {
+        "name": "White Arrow",
+        "email": "cliffstersprog@gmail.com"
+    }
+}
