@@ -92,11 +92,11 @@ namespace WhiteArrow.GameAchievements
 
         private void ClearNonRewardDispenseAchievements()
         {
-            var uncompletedAchievements = _achievements
-                .Where(a => !a.IsRewardDispensed)
+            var achievementsToRemove = _achievements
+                .Where(a => !a.IsCompleted || a.IsRewardDispensed)
                 .ToList();
 
-            foreach (var achievement in uncompletedAchievements)
+            foreach (var achievement in achievementsToRemove)
             {
                 _achievements.Remove(achievement);
                 achievement.Dispose();
