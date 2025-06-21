@@ -5,10 +5,11 @@ namespace WhiteArrow.GameAchievements
     public interface IAchievementGroupSnapshot
     {
         string Id { get; set; }
-        List<IAchievementSnapshot> Achievements { get; set; }
+        IReadOnlyList<IAchievementSnapshot> Achievements { get; }
 
 
 
-        IAchievementSnapshot CreateAchievementInstance();
+        IAchievementSnapshot CreateAchievement();
+        void AddAchievement(IAchievementSnapshot snapshot);
     }
 }

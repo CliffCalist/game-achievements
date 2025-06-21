@@ -72,9 +72,9 @@ namespace WhiteArrow.GameAchievements
 
             foreach (var achievement in _achievements)
             {
-                var achievementSnapshot = snapshot.CreateAchievementInstance();
+                var achievementSnapshot = snapshot.CreateAchievement();
                 achievement.CaptureStateTo(achievementSnapshot);
-                snapshot.Achievements.Add(achievementSnapshot);
+                snapshot.AddAchievement(achievementSnapshot);
             }
 
             return snapshot;
