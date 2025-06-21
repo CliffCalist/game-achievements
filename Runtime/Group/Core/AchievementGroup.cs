@@ -17,6 +17,7 @@ namespace WhiteArrow.GameAchievements
 
         public TConfig Config => _config;
         protected bool _isInited { get; private set; }
+        public IReadOnlyList<Achievement> Achievements => _achievements;
 
 
 
