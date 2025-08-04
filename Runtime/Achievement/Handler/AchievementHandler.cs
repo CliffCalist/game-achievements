@@ -10,6 +10,10 @@ namespace WhiteArrow.GameAchievements
 
 
 
+        public abstract Type TargetConfigType { get; }
+
+
+
         public abstract bool CanHandle(Achievement achievement);
 
         public bool Contains(Achievement achievement)
