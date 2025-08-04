@@ -7,7 +7,7 @@ namespace WhiteArrow.GameAchievements
     public class AchievementFactory : MonoBehaviour, IAchievementFactory
     {
         [SerializeField] private InterfacesList<IAchievementHandler> _handlers;
-        [SerializeField] private InterfacesList<IRewardDispencer> _rewardDispensers;
+        [SerializeField] private InterfacesList<IAchievementRewardDispencer> _rewardDispensers;
 
 
 

@@ -11,7 +11,7 @@ namespace WhiteArrow.GameAchievements
 
         [Header("Base")]
         [SerializeField, Min(1)] private int _targetProgressPoints;
-        [SerializeField] private RewardConfig _reward;
+        [SerializeField] private AchievementRewardConfig _reward;
 
 
 
@@ -20,6 +20,6 @@ namespace WhiteArrow.GameAchievements
         public string Description => _description;
 
         public int TargetProgress => _targetProgressPoints;
-        public RewardConfig Reward => _reward;
+        public AchievementRewardConfig Reward => _reward;
     }
 }

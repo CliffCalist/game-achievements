@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace WhiteArrow.GameAchievements
 {
-    public abstract class RewardConfig : ScriptableObject
+    public abstract class AchievementRewardConfig : ScriptableObject
     {
         [Header("Optional")]
         [SerializeField] private Sprite _icon;
