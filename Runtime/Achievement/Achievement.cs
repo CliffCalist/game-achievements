@@ -2,10 +2,9 @@ using System;
 
 namespace WhiteArrow.GameAchievements
 {
-    public class Achievement : IDisposable
+    public class Achievement
     {
         private readonly AchievementConfig _config;
-        private readonly IAchievementHandler _handler;
         private readonly IAchievementRewardDispencer _rewardDispencer;
 
         private int _progress;
@@ -28,16 +27,12 @@ namespace WhiteArrow.GameAchievements
 
 
 
-        public Achievement(AchievementConfig config, IAchievementHandler handler, IAchievementRewardDispencer rewardDispencer)
+        public Achievement(AchievementConfig config, IAchievementRewardDispencer rewardDispencer)
         {
-            if (UnityCheck.IsDestroyed(handler))
-                throw new ArgumentNullException(nameof(handler));
-
             if (UnityCheck.IsDestroyed(rewardDispencer))
                 throw new ArgumentNullException(nameof(rewardDispencer));
 
             _config = config ?? throw new ArgumentNullException(nameof(config));
-            _handler = handler;
             _rewardDispencer = rewardDispencer;
         }
 
@@ -74,13 +69,6 @@ namespace WhiteArrow.GameAchievements
             snapshot.IsRewardDispensed = _isRewardDispensed;
 
             return snapshot;
-        }
-
-
-
-        public void Init()
-        {
-            _handler.AddAchievement(this);
         }
 
 
@@ -133,13 +121,6 @@ namespace WhiteArrow.GameAchievements
             _rewardDispencer.DispenseReward(_config.Reward);
             _isRewardDispensed = true;
             RewardDispensed?.Invoke();
-        }
-
-
-
-        public void Dispose()
-        {
-            _handler.RemoveAchievement(this);
         }
     }
 }
