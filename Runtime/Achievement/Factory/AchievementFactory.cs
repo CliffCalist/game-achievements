@@ -1,23 +1,32 @@
 using System;
-using System.Linq;
-using UnityEngine;
+using System.Collections.Generic;
 
 namespace WhiteArrow.GameAchievements
 {
-    public class AchievementFactory : MonoBehaviour, IAchievementFactory
+    public class AchievementFactory : IAchievementFactory
     {
-        [SerializeField] private InterfacesList<IAchievementHandler> _handlers;
-        [SerializeField] private InterfacesList<IAchievementRewardDispencer> _rewardDispensers;
+        private readonly List<IAchievementHandler> _handlers;
+        private readonly List<IAchievementRewardDispencer> _rewardDispensers;
+
+
+
+        public AchievementFactory(
+            List<IAchievementHandler> handlers,
+            List<IAchievementRewardDispencer> rewardDispensers)
+        {
+            _handlers = handlers ?? throw new ArgumentNullException(nameof(handlers));
+            _rewardDispensers = rewardDispensers ?? throw new ArgumentNullException(nameof(rewardDispensers));
+        }
 
 
 
         public Achievement Create(AchievementConfig config)
         {
-            var handler = _handlers.First(h => h.TargetConfigType == config.GetType());
+            var handler = _handlers.Find(h => h.TargetConfigType == config.GetType());
             if (handler == null)
                 throw new InvalidOperationException($"There is no handler for achievement type {config.GetType().Name}");
 
-            var rewardDispencer = _rewardDispensers.First(d => d.TargetConfigType == config.Reward.GetType());
+            var rewardDispencer = _rewardDispensers.Find(d => d.TargetConfigType == config.Reward.GetType());
             if (rewardDispencer == null)
                 throw new InvalidOperationException($"There is no reward dispenser for reward type {config.Reward.GetType().Name}");
 
