@@ -14,8 +14,6 @@ namespace WhiteArrow.GameAchievements
 
 
 
-        public abstract bool CanHandle(Achievement achievement);
-
         public bool Contains(Achievement achievement)
         {
             return _achievements.Contains(achievement);
@@ -23,9 +21,6 @@ namespace WhiteArrow.GameAchievements
 
         public void AddAchievement(Achievement achievement)
         {
-            if (!CanHandle(achievement))
-                throw new ArgumentException($"Cannot add {achievement.GetType().Name} to {GetType().Name}");
-
             if (Contains(achievement))
                 throw new ArgumentException($"{achievement.GetType().Name} is already added to {GetType().Name}");
 
