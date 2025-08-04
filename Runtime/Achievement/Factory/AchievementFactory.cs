@@ -23,11 +23,11 @@ namespace WhiteArrow.GameAchievements
         public Achievement Create(AchievementConfig config)
         {
             var handler = _handlers.Find(h => h.TargetConfigType == config.GetType());
-            if (handler == null)
+            if (UnityCheck.IsDestroyed(handler))
                 throw new InvalidOperationException($"There is no handler for achievement type {config.GetType().Name}");
 
             var rewardDispencer = _rewardDispensers.Find(d => d.TargetConfigType == config.Reward.GetType());
-            if (rewardDispencer == null)
+            if (UnityCheck.IsDestroyed(handler))
                 throw new InvalidOperationException($"There is no reward dispenser for reward type {config.Reward.GetType().Name}");
 
             return new(config, handler, rewardDispencer);
