@@ -85,13 +85,27 @@ namespace WhiteArrow.GameAchievements
 
 
 
-        public void AddProgress(int value = 1)
+        public void AddProgress(int value)
         {
             if (value <= 0)
                 throw new ArgumentOutOfRangeException(nameof(value));
 
             if (IsCompleted)
                 throw new InvalidOperationException("Already completed");
+
+            value = Math.Min(value, _config.TargetProgress - _progress);
+            _progress += value;
+
+            ProgressChanged?.Invoke();
+
+            if (IsCompleted)
+                Completed?.Invoke();
+        }
+
+        public void SetProgress(int value)
+        {
+            if (value <= 0)
+                throw new ArgumentOutOfRangeException(nameof(value));
 
             value = Math.Min(value, _config.TargetProgress - _progress);
             _progress += value;

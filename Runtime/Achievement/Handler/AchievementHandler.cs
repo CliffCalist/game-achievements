@@ -34,12 +34,20 @@ namespace WhiteArrow.GameAchievements
 
 
 
-        public void ForceAddProgressPointsToAll(int value = 1)
+        public void AddProgressPointsToAll(int value)
         {
             foreach (var achievement in _achievements)
             {
                 if (!achievement.IsCompleted)
                     achievement.AddProgress(value);
+            }
+        }
+
+        public void SetProgressPointsToAll(int value)
+        {
+            foreach (var achievement in _achievements)
+            {
+                achievement.SetProgress(value);
             }
         }
     }
