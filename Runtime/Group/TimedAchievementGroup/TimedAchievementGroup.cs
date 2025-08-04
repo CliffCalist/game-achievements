@@ -4,7 +4,7 @@ using Random = UnityEngine.Random;
 
 namespace WhiteArrow.GameAchievements
 {
-    public class TimedAchievementGroup : AchievementGroup<TimedAchievementGroupConfig>, ITickable
+    public class TimedAchievementGroup : AchievementGroup<TimedAchievementGroupConfig>, IDisposable, ITickable
     {
         private DateTime _lastRefreshTime = DateTime.UtcNow;
 
@@ -79,10 +79,6 @@ namespace WhiteArrow.GameAchievements
             foreach (var config in candidates)
             {
                 var achievement = _achievementFactory.Create(config);
-
-                if (_isInited)
-                    achievement.Init();
-
                 _achievements.Add(achievement);
             }
 
@@ -97,10 +93,7 @@ namespace WhiteArrow.GameAchievements
                 .ToList();
 
             foreach (var achievement in achievementsToRemove)
-            {
                 _achievements.Remove(achievement);
-                achievement.Dispose();
-            }
         }
 
 
@@ -115,9 +108,8 @@ namespace WhiteArrow.GameAchievements
         }
 
 
-        public override void Dispose()
+        public void Dispose()
         {
-            base.Dispose();
             RuntimeTicker.Unregister(this);
         }
     }

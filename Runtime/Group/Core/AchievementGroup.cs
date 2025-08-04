@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace WhiteArrow.GameAchievements
 {
-    public abstract class AchievementGroup<TConfig> : IAchievementGroup
+    public abstract class AchievementGroup<TConfig>
         where TConfig : AchievementGroupConfig
     {
         protected readonly TConfig _config;
@@ -87,7 +87,6 @@ namespace WhiteArrow.GameAchievements
             if (_isInited)
                 throw new InvalidOperationException("Achievement group is already inited");
 
-            _achievements.ForEach(a => a.Init());
             InitCore();
             _isInited = true;
         }
@@ -98,17 +97,7 @@ namespace WhiteArrow.GameAchievements
 
         protected void ClearAllAchievements()
         {
-            foreach (var achievement in _achievements)
-                achievement.Dispose();
-
             _achievements.Clear();
-        }
-
-
-
-        public virtual void Dispose()
-        {
-            _achievements.ForEach(achievement => achievement.Dispose());
         }
     }
 }
