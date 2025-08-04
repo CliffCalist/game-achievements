@@ -47,9 +47,5 @@ namespace WhiteArrow.GameAchievements
                     achievement.AddProgress(value);
             }
         }
-
-
-
-        public virtual void Init() { }
     }
 }
