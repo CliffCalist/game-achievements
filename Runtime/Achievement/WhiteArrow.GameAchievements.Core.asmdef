@@ -1,5 +1,5 @@
 {
-    "name": "WhiteArrow.GameAchievements",
+    "name": "WhiteArrow.GameAchievements.Core",
     "rootNamespace": "WhiteArrow.GameAchievements",
     "references": [
         "GUID:e3a1b3532d5ca4d54be21cb53828b508"
