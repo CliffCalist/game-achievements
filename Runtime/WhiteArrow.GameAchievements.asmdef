@@ -1,0 +1,19 @@
+{
+    "name": "WhiteArrow.GameAchievements",
+    "rootNamespace": "WhiteArrow.GameAchievements",
+    "references": [
+        "GUID:e3a1b3532d5ca4d54be21cb53828b508",
+        "GUID:12976d35d9c9143c09166879377efd0b",
+        "GUID:0cfcab5f4a5854ab2bdb5b44d82b1ed3",
+        "GUID:3cd5b9d27a6d64ab39454bae7e4e136e"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
