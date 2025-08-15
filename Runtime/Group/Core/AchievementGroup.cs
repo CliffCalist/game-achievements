@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace WhiteArrow.GameAchievements
 {
-    public class AchievementGroup<TConfig>
+    public class AchievementGroup<TConfig> : IAchievementGroup
         where TConfig : AchievementGroupConfig
     {
         protected readonly TConfig _config;
@@ -16,7 +16,10 @@ namespace WhiteArrow.GameAchievements
 
 
         public bool IsInited { get; protected set; }
+
+        AchievementGroupConfig IAchievementGroup.Config => _config;
         public TConfig Config => _config;
+
         public IReadOnlyCollection<Achievement> Achievements => _achievements.Values;
 
 

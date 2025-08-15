@@ -1,17 +1,25 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
 
 namespace WhiteArrow.GameAchievements
 {
     public class AchievementsService : IDisposable
     {
-        private readonly IAchievementFactory _factory;
-        private readonly Dictionary<string, Achievement> _achievementsById = new();
+        public readonly IAchievementFactory AchievementFactory;
 
         private readonly HashSet<IAchievementHandler> _handlers = new();
+        private readonly Dictionary<string, IAchievementGroup> _groupsById = new();
+        private readonly Dictionary<string, Achievement> _achievementsById = new();
 
 
-        public ICollection<Achievement> ActiveAchievements => _achievementsById.Values;
+
+        public bool IsInited { get; private set; }
+
+        public IReadOnlyCollection<IAchievementGroup> Groups => _groupsById.Values;
+        public IReadOnlyCollection<Achievement> NonGroupedAchievements => _achievementsById.Values;
+        public IEnumerable<Achievement> AllAchievements => _achievementsById.Values.Concat(_groupsById.Values.SelectMany(g => g.Achievements));
 
 
 
@@ -20,8 +28,9 @@ namespace WhiteArrow.GameAchievements
             if (UnityCheck.IsDestroyed(factory))
                 throw new ArgumentNullException(nameof(factory));
 
-            _factory = factory;
+            AchievementFactory = factory;
         }
+
 
 
         public void AddHandler(IAchievementHandler handler)
@@ -32,7 +41,7 @@ namespace WhiteArrow.GameAchievements
             _handlers.Add(handler);
 
             foreach (var achievement in _achievementsById.Values)
-                TryBindAchievementToHandler(achievement, handler);
+                TryAddAchievementToHandler(achievement, handler);
         }
 
         public void AddManyHandlers(IEnumerable<IAchievementHandler> handlers)
@@ -48,11 +57,10 @@ namespace WhiteArrow.GameAchievements
             if (config == null)
                 throw new ArgumentNullException(nameof(config));
 
-            var achievement = _factory.Create(config);
+            var achievement = AchievementFactory.Create(config);
             _achievementsById[config.Id] = achievement;
 
-            foreach (var handler in _handlers)
-                TryBindAchievementToHandler(achievement, handler);
+            AddAchievementToAllHandlers(achievement);
         }
 
         public void AddManyAchievementsByConfig(IEnumerable<AchievementConfig> configs)
@@ -80,10 +88,95 @@ namespace WhiteArrow.GameAchievements
 
 
 
-        private void TryBindAchievementToHandler(Achievement achievement, IAchievementHandler handler)
+        public void AddGroup(IAchievementGroup group)
+        {
+            if (UnityCheck.IsDestroyed(group))
+                throw new ArgumentNullException(nameof(group));
+
+            _groupsById[group.Config.Id] = group;
+
+            if (IsInited)
+            {
+                group.Init();
+                AddManyAchievementsToAllHandlers(group.Achievements);
+            }
+        }
+
+        public void RemoveGroup(string id)
+        {
+            var group = _groupsById[id];
+            if (group == null)
+            {
+                Debug.LogWarning($"Cannot remove group with ID {id} because it was not found.");
+                return;
+            }
+
+            RemoveManyAchievementFromAllHandlers(group.Achievements);
+
+            if (group is IDisposable disposableGroup)
+                disposableGroup.Dispose();
+
+            _groupsById.Remove(id);
+        }
+
+
+
+        public bool TryGetGroup(string id, out IAchievementGroup group)
+        {
+            return _groupsById.TryGetValue(id, out group);
+        }
+
+
+
+        public void Init()
+        {
+            if (IsInited)
+                throw new InvalidOperationException($"{nameof(AchievementsService)} is already inited.");
+
+            foreach (var group in _groupsById.Values)
+            {
+                group.Init();
+                AddManyAchievementsToAllHandlers(group.Achievements);
+            }
+
+            IsInited = true;
+        }
+
+
+
+        private bool TryAddAchievementToHandler(Achievement achievement, IAchievementHandler handler)
         {
             if (handler.TargetConfigType == achievement.Config.GetType())
+            {
                 handler.AddAchievement(achievement);
+                return true;
+            }
+            else return false;
+        }
+
+        private void AddAchievementToAllHandlers(Achievement achievement)
+        {
+            foreach (var handler in _handlers)
+                TryAddAchievementToHandler(achievement, handler);
+        }
+
+        private void AddManyAchievementsToAllHandlers(IEnumerable<Achievement> achievements)
+        {
+            foreach (var achievement in achievements)
+                AddAchievementToAllHandlers(achievement);
+        }
+
+
+        private void RemoveManyAchievementFromAllHandlers(IEnumerable<Achievement> achievements)
+        {
+            foreach (var handler in _handlers)
+            {
+                foreach (var achievement in achievements)
+                {
+                    if (handler.HasAchievement(achievement))
+                        handler.RemoveAchievement(achievement);
+                }
+            }
         }
 
 
@@ -92,6 +185,12 @@ namespace WhiteArrow.GameAchievements
         {
             foreach (var handler in _handlers)
                 handler.RemoveAllAchievements();
+
+            foreach (var group in _groupsById.Values)
+            {
+                if (group is IDisposable disposableGroup)
+                    disposableGroup.Dispose();
+            }
         }
     }
 }
