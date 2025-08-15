@@ -86,7 +86,7 @@ namespace WhiteArrow.GameAchievements
             foreach (var config in candidates)
             {
                 var achievement = _achievementFactory.Create(config);
-                _achievements.Add(achievement);
+                _achievements.Add(achievement.Config.Id, achievement);
             }
 
             _lastRefreshTime = DateTime.UtcNow;
@@ -95,12 +95,10 @@ namespace WhiteArrow.GameAchievements
 
         private void ClearNonRewardDispenseAchievements()
         {
-            var achievementsToRemove = _achievements
-                .Where(a => !a.IsCompleted || a.IsRewardDispensed)
-                .ToList();
+            var achievementsToRemove = _achievements.Values.Where(a => !a.IsCompleted || a.IsRewardDispensed);
 
             foreach (var achievement in achievementsToRemove)
-                _achievements.Remove(achievement);
+                _achievements.Remove(achievement.Config.Id);
         }
 
 

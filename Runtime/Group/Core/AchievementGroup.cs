@@ -11,13 +11,13 @@ namespace WhiteArrow.GameAchievements
         protected readonly TConfig _config;
 
         protected readonly IAchievementFactory _achievementFactory;
-        protected readonly List<Achievement> _achievements = new();
+        protected readonly Dictionary<string, Achievement> _achievements = new();
 
 
 
         public bool IsInited { get; protected set; }
         public TConfig Config => _config;
-        public IReadOnlyList<Achievement> Achievements => _achievements;
+        public IReadOnlyCollection<Achievement> Achievements => _achievements.Values;
 
 
 
@@ -59,7 +59,7 @@ namespace WhiteArrow.GameAchievements
 
                     achievement = _achievementFactory.Create(achievementConfig);
                     achievement.RestoreState(achievementSnapshot);
-                    _achievements.Add(achievement);
+                    _achievements.Add(achievement.Config.Id, achievement);
                 }
                 else achievement.RestoreState(achievementSnapshot);
             }
@@ -72,7 +72,7 @@ namespace WhiteArrow.GameAchievements
 
             snapshot.Id = _config.Id;
 
-            foreach (var achievement in _achievements)
+            foreach (var achievement in _achievements.Values)
             {
                 var achievementSnapshot = snapshot.CreateAchievement();
                 achievement.CaptureStateTo(achievementSnapshot);
@@ -95,7 +95,7 @@ namespace WhiteArrow.GameAchievements
                 if (achievement == null)
                 {
                     achievement = _achievementFactory.Create(achievementConfig);
-                    _achievements.Add(achievement);
+                    _achievements.Add(achievement.Config.Id, achievement);
                 }
             }
 
@@ -106,7 +106,7 @@ namespace WhiteArrow.GameAchievements
 
         public Achievement GetAchievementById(string id)
         {
-            return _achievements.FirstOrDefault(a => a.Config.Id == id);
+            return _achievements[id];
         }
 
 
