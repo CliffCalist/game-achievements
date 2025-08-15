@@ -27,9 +27,9 @@ namespace WhiteArrow.GameAchievements
             _achievements.Add(achievement);
         }
 
-        public void RemoveAchievement(Achievement achievement)
+        public void RemoveAllAchievements()
         {
-            _achievements.Remove(achievement);
+            _achievements.Clear();
         }
 
 
