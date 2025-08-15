@@ -4,8 +4,9 @@ using Random = UnityEngine.Random;
 
 namespace WhiteArrow.GameAchievements
 {
-    public class TimedAchievementGroup : AchievementGroup<TimedAchievementGroupConfig>, IDisposable, ITickable
+    public class TimedAchievementGroup : AchievementGroup<TimedAchievementGroupConfig>, ITickableAchievementGroup
     {
+        private readonly ITickableAchievementGroupRegistrar _tickableRegistrar;
         private DateTime _lastRefreshTime = DateTime.UtcNow;
 
 
@@ -14,9 +15,11 @@ namespace WhiteArrow.GameAchievements
 
 
 
-        public TimedAchievementGroup(TimedAchievementGroupConfig config, IAchievementFactory achievementFactory)
+        public TimedAchievementGroup(TimedAchievementGroupConfig config, IAchievementFactory achievementFactory, ITickableAchievementGroupRegistrar tickableRegistrar)
             : base(config, achievementFactory)
-        { }
+        {
+            _tickableRegistrar = tickableRegistrar ?? throw new ArgumentNullException(nameof(tickableRegistrar));
+        }
 
 
 
@@ -47,9 +50,13 @@ namespace WhiteArrow.GameAchievements
 
 
 
-        protected override void InitCore()
+        public override void Init()
         {
-            RuntimeTicker.Register(this);
+            if (IsInited)
+                throw new InvalidOperationException("Group is already inited.");
+
+            _tickableRegistrar.Register(this);
+            IsInited = true;
         }
 
 
@@ -98,7 +105,7 @@ namespace WhiteArrow.GameAchievements
 
 
 
-        void ITickable.Tick(float deltaTime)
+        void ITickableAchievementGroup.Tick(float deltaTime)
         {
             if (CalculateTimeFromLastRefresh().TotalSeconds >= _config.RefreshTimeRate)
             {
@@ -110,7 +117,7 @@ namespace WhiteArrow.GameAchievements
 
         public void Dispose()
         {
-            RuntimeTicker.Unregister(this);
+            _tickableRegistrar.Unregister(this);
         }
     }
 }

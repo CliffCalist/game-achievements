@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace WhiteArrow.GameAchievements
 {
-    [CreateAssetMenu(fileName = "TimedAchievementGroupConfig", menuName = "White Arrow/Achievements/Timed Achievement Group")]
+    [CreateAssetMenu(fileName = "TimedAchievementGroupConfig", menuName = "White Arrow/Achievements/Timed Group")]
     public class TimedAchievementGroupConfig : AchievementGroupConfig
     {
         [SerializeField, Min(1)] private int _activeCount = 1;

@@ -9,14 +9,14 @@ namespace WhiteArrow.GameAchievements
         where TConfig : AchievementGroupConfig
     {
         protected readonly TConfig _config;
-        protected readonly IAchievementFactory _achievementFactory;
 
+        protected readonly IAchievementFactory _achievementFactory;
         protected readonly List<Achievement> _achievements = new();
 
 
 
+        public bool IsInited { get; protected set; }
         public TConfig Config => _config;
-        protected bool _isInited { get; private set; }
         public IReadOnlyList<Achievement> Achievements => _achievements;
 
 
@@ -40,28 +40,30 @@ namespace WhiteArrow.GameAchievements
             if (snapshot.Id != _config.Id)
                 throw new ArgumentException($"Snapshot ID '{snapshot.Id}' does not match group ID '{_config.Id}'");
 
-            ClearAllAchievements();
-
             var achievementSnapshots = snapshot.Achievements;
             foreach (var achievementSnapshot in achievementSnapshots)
             {
                 if (UnityCheck.IsDestroyed(achievementSnapshot))
                     throw new ArgumentNullException(nameof(achievementSnapshot));
 
-                var achievementConfig = _config.Achievements.FirstOrDefault(c => c.Id == achievementSnapshot.Id);
-                if (achievementConfig == null)
-                {
-                    Debug.LogWarning($"Detected unknown achievement in snapshot. ID: [{achievementSnapshot.Id}]");
-                    continue;
-                }
+                var achievement = GetAchievementById(achievementSnapshot.Id);
 
-                var achievement = _achievementFactory.Create(achievementConfig);
-                achievement.RestoreState(achievementSnapshot);
-                _achievements.Add(achievement);
+                if (achievement == null)
+                {
+                    var achievementConfig = GetAchievementConfigById(achievementSnapshot.Id);
+                    if (achievementConfig == null)
+                    {
+                        Debug.LogWarning($"Detected unknown achievement in snapshot. ID: [{achievementSnapshot.Id}]");
+                        continue;
+                    }
+
+                    achievement = _achievementFactory.Create(achievementConfig);
+                    achievement.RestoreState(achievementSnapshot);
+                    _achievements.Add(achievement);
+                }
+                else achievement.RestoreState(achievementSnapshot);
             }
         }
-
-
 
         public virtual IAchievementGroupSnapshot CaptureStateTo(IAchievementGroupSnapshot snapshot)
         {
@@ -82,16 +84,47 @@ namespace WhiteArrow.GameAchievements
 
 
 
-        public void Init()
+        public virtual void Init()
         {
-            if (_isInited)
-                throw new InvalidOperationException("Achievement group is already inited");
+            if (IsInited)
+                throw new InvalidOperationException("Group is already inited.");
 
-            InitCore();
-            _isInited = true;
+            foreach (var achievementConfig in _config.Achievements)
+            {
+                var achievement = GetAchievementById(achievementConfig.Id);
+                if (achievement == null)
+                {
+                    achievement = _achievementFactory.Create(achievementConfig);
+                    _achievements.Add(achievement);
+                }
+            }
+
+            IsInited = true;
         }
 
-        protected virtual void InitCore() { }
+
+
+        public Achievement GetAchievementById(string id)
+        {
+            return _achievements.FirstOrDefault(a => a.Config.Id == id);
+        }
+
+
+
+        public AchievementConfig GetAchievementConfigById(string id)
+        {
+            return _config.Achievements.FirstOrDefault(c => c.Id == id);
+        }
+
+        public TAchievementConfig GetAchievementConfigById<TAchievementConfig>(string id)
+            where TAchievementConfig : AchievementConfig
+        {
+            var config = GetAchievementConfigById(id);
+
+            if (config is not TAchievementConfig typedConfig)
+                throw new KeyNotFoundException($"Achievement config with ID '{id}' was not found.");
+            else return typedConfig;
+        }
 
 
 
