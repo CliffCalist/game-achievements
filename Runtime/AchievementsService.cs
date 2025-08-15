@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace WhiteArrow.GameAchievements
 {
-    public class AchievementsService
+    public class AchievementsService : IDisposable
     {
         private readonly IAchievementFactory _factory;
         private readonly Dictionary<string, Achievement> _achievementsById = new();
@@ -84,6 +84,14 @@ namespace WhiteArrow.GameAchievements
         {
             if (handler.TargetConfigType == achievement.Config.GetType())
                 handler.AddAchievement(achievement);
+        }
+
+
+
+        public void Dispose()
+        {
+            foreach (var handler in _handlers)
+                handler.RemoveAllAchievements();
         }
     }
 }
