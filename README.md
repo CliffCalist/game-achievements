@@ -2,119 +2,43 @@
 
 Game Achievements is a flexible and extensible achievement system for Unity. It separates core logic, configuration, and runtime handlers, allowing for clean and modular achievement implementation in any game.
 
-# Features
+## Features
 
-- Achievements and rewards are independent and fully composable
-- Achievements and rewards are configured via ScriptableObjects
-- Handlers are MonoBehaviours, allowing scene context and inspector-based setup
+### General
+- All components — achievements, rewards, and groups — are fully composable and work independently
+- All configurations (for achievements, rewards, and groups) are defined via ScriptableObjects
+- Full snapshot system to save and restore runtime state, including individual achievements and groups
+
+### Achievements
+- Handlers are MonoBehaviours, allowing both inspector-based setup and full dependency injection
 - One handler can manage multiple achievements of the same type
+- No manual mapping: handlers and rewards are resolved automatically based on config type
+
+### Groups
 - Achievement groups support custom logic and grouping behavior
 - Groups can be static or time-based with automatic refresh
 - Timed groups can optionally preserve completed (but unclaimed) achievements during refresh
-- Snapshot system for saving and restoring both achievements and groups
-- No manual mapping: handlers and rewards are resolved automatically based on config type
 
 # Installing
 
-Add the package to Unity via UPM:
-https://github.com/white-arrow-studio/game-achievements.git
+To install via UPM, use "Install package from git URL" and add the following:
 
-# Usage: Basic Setup
-
-## Architectural note
-
-This system is designed around flexible abstraction to support arbitrary types of achievements and rewards. As a result:
-
-- You’ll often receive objects like configs or logic in their **base types**
-- It’s your responsibility to cast them to the expected type and throw a clear error if the cast fails
-- This keeps the system extensible without requiring reflection or rigid bindings
-
-The framework guarantees that, under correct configuration, you'll receive the expected type — even if it arrives in base form. The cast check is just a safeguard in case of internal mapping bugs. If you ever encounter such a case, let us know — we'll fix it. But under normal use, these casts will always succeed.
-
-We intentionally avoided generics in most places, as they introduce tight coupling and excess boilerplate. If we find a clean way to integrate generics without sacrificing flexibility — we’ll adopt it.
-
-Here’s the recommended pattern:
-
-```csharp
-public class CurrencyRewardDispencer : IRewardDispencer
-{
-    public void DispenseReward(RewardConfig rewardConfig)
-    {
-        if (rewardConfig is not CurrencyRewardConfig config)
-            throw new InvalidCastException($"Expected {nameof(CurrencyRewardConfig)}, got {rewardConfig.GetType().Name}");
-
-        PlayerWallet.Add(config.CurrencyId, config.Amount);
-    }
-}
+```
+1. https://github.com/CliffCalist/Unity-Tools.git
+2. https://github.com/white-arrow-studio/game-achievements.git
 ```
 
-All object mapping (from config → logic → handler → reward) is handled via **factories**, which will be shown in a later step.
+# Quick Start
 
-## Step 1 — Create an achievement config and handler
-
-Each achievement is defined by two components:
-
-- **`AchievementConfig`**: a ScriptableObject that stores metadata and parameters
-- **`AchievementHandler`**: a MonoBehaviour that tracks progress for a specific type of achievement
-
-The base `AchievementConfig` already includes:
-
-- `Id`, `Name`, `Description` — for UI and identification
-- `TargetProgress` — how much progress is required to complete the achievement
-- `RewardConfig` — reference to a reward to be granted upon completion
-
-To define your own achievement type, simply inherit from the base config:
-
-```csharp
-[CreateAssetMenu(menuName = "Achievements/Kill Enemies")]
-public class KillEnemiesAchievementConfig : AchievementConfig
-{
-    public string EnemyType;
-}
-```
-
-Next, implement a handler for this type of achievement. All handlers must inherit from the base `AchievementHandler`, which already provides:
-
-- A list of registered achievements
-- Validation when adding/removing achievements
-- A utility method to add progress to all non-completed achievements
-
-Here’s a minimal handler implementation:
-
-```csharp
-public class KillEnemiesAchievementHandler : AchievementHandler
-{
-    public override bool CanHandle(Achievement achievement)
-    {
-        return achievement is KillEnemiesAchievement;
-    }
-
-    public void OnEnemyKilled(string type)
-    {
-        foreach (var achievement in _achievements)
-        {
-            if (achievement is KillEnemiesAchievement kill && kill.MatchesType(type))
-                kill.AddProgress(1);
-        }
-    }
-}
-```
-
-This approach keeps your logic modular and allows multiple achievement types to coexist in the same scene, each with their own handler.
-
-## Step 2 — Create a reward dispenser
+## Step 1 — Create a reward dispenser
 
 Each reward consists of two parts:
 
 - `RewardConfig`: a ScriptableObject that holds configuration data
 - `IRewardDispencer`: interface that defines how the reward is actually granted
 
-The base `RewardConfig` already includes:
-
-- `Amount`: numeric value representing how much reward to give
-- `Icon`: optional sprite to show in UI
-
-These fields don’t need to be duplicated in your subclass — just inherit and add what’s specific to your reward type.
+The base `RewardConfig` already includes `Amount`. Is a numeric value representing how much reward to give.
+These field don’t need to be duplicated in your subclass — just inherit and add what’s specific to your reward type.
 
 For example, a reward that grants a currency might look like this:
 
@@ -132,6 +56,8 @@ Then implement the actual reward logic by creating a class that implements `IRew
 ```csharp
 public class CurrencyRewardDispencer : IRewardDispencer
 {
+    public Type TargetConfigType {get; } = typeof(CurrencyRewardConfig);
+
     public void DispenseReward(RewardConfig rewardConfig)
     {
         if (rewardConfig is not CurrencyRewardConfig config)
@@ -142,241 +68,350 @@ public class CurrencyRewardDispencer : IRewardDispencer
 }
 ```
 
-## Step 3 — Set up factories for achievements and rewards
+## Step 2 — Create an achievement
 
-Factories are `MonoBehaviour` components placed in the scene. This provides flexibility and access to scene context if needed (e.g., serialized references or injected services). Their purpose is to instantiate achievements and reward dispensers based on config types, keeping creation logic modular and decoupled.
+Each achievement is defined by two parts:
 
-There are two primary typed factory bases:
+- `AchievementConfig`: a ScriptableObject that holds metadata and conditions
+- `AchievementHandler`: a component that listens for game events and forwards progress to the correct achievements
 
-- `AchievementFactoryByConfig` — creates an `Achievement` from an `AchievementConfig`
-- `RewardDispencerFactoryByConfig` — creates an `IRewardDispencer` from a `RewardConfig`
+The base `AchievementConfig` includes:
 
-The central factories (`AchievementFactory`, `RewardDispencerFactory`) automatically route creation requests to the matching factory via `CanCreateBy`.
+- `Id` — identification
+- `TargetProgress` — required value for completion
+- `Reward` — the reward to be granted
 
-**Example of a reward dispenser factory:**
+To define your own achievement, subclass `AchievementConfig` with additional parameters:
 
 ```csharp
-public class CurrencyRewardDispenserFactory : RewardDispencerFactoryByConfig
+[CreateAssetMenu(menuName = "Achievements/Configs/Kill Enemies")]
+public class KillEnemiesAchievementConfig : AchievementConfig
 {
-    public override bool CanCreateBy(RewardConfig config) => config is CurrencyRewardConfig;
+    [SerializeField] private string _enemyType;
+    public string EnemyType => _enemyType;
+}
+```
 
-    public override IRewardDispencer Create(RewardConfig config)
+Then, create a handler that tracks related gameplay events and reports progress. Handlers inherit from `AchievementHandler`, which provides:
+
+- A list of tracked achievements
+- Validation logic
+- Utility methods for applying progress
+
+Example handler:
+
+```csharp
+public class KillEnemiesAchievementHandler : AchievementHandler
+{
+    public void OnEnemyKilled(string killedType)
     {
-        if (config is not CurrencyRewardConfig currencyConfig)
-            throw new InvalidCastException();
-
-        return new CurrencyRewardDispencer();
+        foreach (var achievement in _achievements)
+        {
+            if (achievement is KillEnemiesAchievement kill && kill.EnemyType == killedType)
+                kill.AddProgress(1);
+        }
     }
 }
 ```
 
-**Example of an achievement factory:**
+The framework does not require handlers to be initialized in any specific way. However, if a handler needs to subscribe to events, retrieve dependencies, or perform other setup logic, the developer is responsible for implementing that according to their project requirements.
+
+## Step 3 — Configure achievement groups
+
+The framework provides built-in support for static and time-based achievement groups.
+
+- **Simple Group**: Displays all assigned achievements.
+- **Timed Group**: Periodically refreshes a limited set of visible achievements.
+
+Both group types require only a ScriptableObject config to set up.
+
+Example: Create a timed group config via the Unity editor menu:
+
+```
+Assets → Create → Achievements → Simple/Timed Group
+```
+
+All group configs inherit from the base `AchievementGroupConfig`, which includes:
+
+- `Id`: a unique identifier for the group
+- `Achievements`: a list of achievement configs included in the group
+
+The default `AchievementGroupConfig` adds no extra logic — it simply groups achievements, making it suitable for representing categories like "Daily", "Exploration", or "Challenges".
+
+The `TimedAchievementGroupConfig` provides additional behavior for time-based groups:
+
+- `_activeCount`: maximum number of active achievements selected from the group
+- `_refreshTimeRate`: how often to refresh the active achievements (in seconds)
+- `_saveUnreceivedAchievements`: if true, completed but unclaimed achievements are preserved during refresh
+
+This makes it easy to configure rotating daily, weekly, or seasonal achievement groups.
+
+Custom groups can be implemented by inheriting from `AchievementGroup<TConfig>` and creating your own config type.
+
+## Step 4 — Create and initialize the AchievementsService
 
 ```csharp
-public class KillEnemiesAchievementFactory : AchievementFactoryByConfig
+public class MyAchievementSystem : MonoBehaviour
 {
-    [SerializeField] private KillEnemiesHandler _handler;
+    [SerializeField] private List<AchievementHandler> _handlers;
 
-    public override bool CanCreateBy(AchievementConfig config) => config is KillEnemiesAchievementConfig;
+    [SerializeField] private List<IAchievementRewardDispencer> _rewardDispencers;
+    [SerializeField] private List<AchievementConfig> _achievementConfigs;
 
-    protected override Achievement Create(AchievementConfig config, IRewardDispencer rewardDispencer)
+    [SerializeField] private AchievementGroupConfig _simpleGroupConfig;
+    [SerializeField] private TimedAchievementGroupConfig _timedGroupConfig;
+
+    private AchievementsService _service;
+
+    private void Start()
     {
-        if (config is not KillEnemiesAchievementConfig killConfig)
-            throw new InvalidCastException();
+        // Create achievement factory and service, then register handlers and achievements
+        var factory = new AchievementFactory(_rewardDispencers);
+        _service = new AchievementsService(factory);
+        _service.AddManyHandlers(_handlers);
+        _service.AddManyAchievementsByConfig(_achievementConfigs);
 
-        return new Achievement(killConfig, _handler, rewardDispencer);
+        // Create and add groups (simple and time-based)
+        // If the factory instance is not accessible, you can use service.AchievementFactory
+        var simpleGroup = new SimpleAchievementGroup(_simpleGroupConfig, factory);
+        _service.AddGroup(simpleGroup);
+
+        // The myTickableRegistrar enables ticking for time-based groups — see advanced section for more
+        var timedGroup = new TimedAchievementGroup(_timedGroupConfig, factory, new MyTickableRegistrar());
+        _service.AddGroup(timedGroup);
+
+        // Initialize the service — this also initializes all groups (starts timers, etc.)
+        _service.Init();
+    }
+
+    private void OnDestroy()
+    {
+        _service.Dispose();
     }
 }
 ```
 
-Each sub-factory handles only the types it supports. The central factory delegates creation based on `CanCreateBy`, allowing you to add new achievement and reward types by simply creating new config + factory pairs — no need to modify any existing code.
 
-## Step 4 — Scene setup and initialization
+# Advanced Topics
 
-Once your configs, handlers, and factories are created, it's time to wire everything together in the scene.
+## Saving and Restoring State
 
-### 1. Set up the reward dispenser factory
+The framework interacts with achievement and group state through interfaces. This allows you to implement your own snapshot classes tailored to your save system.
 
-1. Create a `GameObject` named `AchievementRewardDispencerFactory` and attach the `RewardDispencerFactory` component.
-2. Create separate child GameObjects under it — one for each specific reward dispenser factory (e.g., `CurrencyRewardFactory`, `ItemRewardFactory`, etc.).
-3. Assign all these sub-factories to the `Factories` list in the parent `RewardDispencerFactory` via the Inspector.
+Both `Achievement` and `AchievementGroup` support saving and restoring via:
 
-### 2. Set up the achievement factory
+```csharp
+var snapshot = new MySnapshotImplementation();
+target.CaptureStateTo(snapshot); // Save current state into snapshot
 
-1. Create a similar structure for achievement factories.
-2. The root factory should be of type `AchievementFactory`, with:
-   - The `_factories` list populated with your concrete `AchievementFactoryByConfig` instances
-   - The `_rewardDispencerFactory` field referencing the `RewardDispencerFactory` object created earlier
+// ... Later:
+target.RestoreState(snapshot);  // Restore state from snapshot
+```
 
-This allows the achievement factory to create achievements and automatically inject the correct reward dispenser based on the configuration.
+### Achievement Snapshot
 
-### 3. Set up achievement handlers
+Implement `IAchievementSnapshot` to represent the state of a single achievement:
 
-Handlers are also `MonoBehaviour` components and should be added to appropriate GameObjects in the scene.
+```csharp
+[Serializable]
+public class MyAchievementSnapshot : IAchievementSnapshot
+{
+    [SerializeField] private string _id;
+    [SerializeField] private int _progress;
+    [SerializeField] private bool _isRewardDispenced;
 
-- You can organize them under a single root object if desired.
-- There is no central handler registry required.
-- Each handler implements a virtual `Init()` method, which should be manually called at the appropriate point in your game's lifecycle.
-- This gives you full control over when handlers are initialized, which is helpful if they depend on other systems or data.
 
-### 4. Initialize everything in code
 
-You can create a `MonoBehaviour` like `AchievementStorage` to wire things up.
+    public string Id
+    {
+        get => _id;
+        set => _id = value;
+    }
+
+    public int Progress
+    {
+        get => _progress;
+        set => _progress = value;
+    }
+
+    public bool IsRewardDispensed
+    {
+        get => _isRewardDispenced;
+        set => _isRewardDispenced = value;
+    }
+}
+```
+
+### Group Snapshot
+
+Implement `IAchievementGroupSnapshot` to represent a group of achievements:
+
+```csharp
+[Serializable]
+public class MyAchievementGroupSnapshot : IAchievementGroupSnapshot
+{
+    [SerializeField] private string _id;
+    [SerializeField] private List<MyAchievementSnapshot> _achievements = new();
+
+
+
+    public string Id
+    {
+        get => _id;
+        set => _id = value;
+    }
+    
+    public IEnumerable<IAchievementSnapshot> Achievements => _achievements.Cast<IAchievementSnapshot>();
+
+
+
+    public IAchievementSnapshot CreateAchievement()
+    {
+        return new MyAchievementSnapshot();
+    }
+
+    public void AddAchievement(IAchievementSnapshot snapshot)
+    {
+        _achievements.Add(snapshot);
+    }
+}
+```
+
+These snapshot classes are fully serializable and can be saved using your preferred system (e.g. JSON, binary, PlayerPrefs, cloud, etc.).
+
+### Achievements Service Snapshot
+
+The `AchievementsService` also supports saving and restoring its full internal state, including both standalone achievements and registered groups.
+
+Keep in mind the following important constraint:
+
+> Before calling `RestoreState()`, you must ensure that all achievement configs and groups have already been added to the service. If a snapshot refers to an unknown achievement or group ID, it will be ignored and a warning will be logged to the console.
+
+To implement a snapshot class for the service, implement the `IAchievementsServiceSnapshot` interface:
+
+```csharp
+[Serializable]
+public class MyAchievementsServiceSnapshot : IAchievementsServiceSnapshot
+{
+    [SerializeField] private List<MyAchievementSnapshot> _achievements = new();
+    [SerializeField] private List<MyAchievementGroupSnapshot> _groups = new();
+
+
+
+    public IEnumerable<IAchievementSnapshot> Achievements => _achievements;
+    public IEnumerable<IAchievementGroupSnapshot> Groups => _groups;
+
+
+
+    public IAchievementSnapshot CreateAchievement()
+    {
+        return new MyAchievementSnapshot();
+    }
+
+    public IAchievementGroupSnapshot CreateGroup()
+    {
+        return new MyAchievementGroupSnapshot();
+    }
+
+
+
+    public void AddAchievement(IAchievementSnapshot snapshot)
+    {
+        _achievements.Add((MyAchievementSnapshot)snapshot);
+    }
+
+    public void AddGroup(IAchievementGroupSnapshot snapshot)
+    {
+        _groups.Add((MyAchievementGroupSnapshot)snapshot);
+    }
+}
+```
+
+This implementation is serializable and can be persisted using any storage system (e.g. JSON, binary files, PlayerPrefs, cloud saves, etc.).
+
+
+## Custom Achievement Groups
+
+To define a custom group, you can either reuse the default `AchievementGroupConfig` or subclass it to extend functionality.
+
+If the default config suits your needs, use it directly. Otherwise, create your own config type:
+
+```csharp
+[CreateAssetMenu(menuName = "Achievements/Configs/My Custom Group")]
+public class MyCustomAchievementGroupConfig : AchievementGroupConfig
+{
+    [SerializeField] private int _someExtraParameter;
+    public int SomeExtraParameter => _someExtraParameter;
+}
+```
+
+Next, create a custom achievement group by inheriting from `AchievementGroup<TConfig>`. You get access to the following fields and properties:
+
+- `_config` — the group configuration
+- `_achievementFactory` — the factory used to create achievements
+- `_achievements` — the list of active achievements
+- `IsInited` — whether the group has been initialized
+
+You can override these virtual methods:
+
+- `void RestoreState(IAchievementGroupSnapshot snapshot)`
+- `IAchievementGroupSnapshot CaptureStateTo(IAchievementGroupSnapshot snapshot)`
+- `void Init()`
+
+Utility methods available:
+
+- `Achievement GetAchievementById(string id)`
+- `AchievementConfig GetAchievementConfigById(string id)`
+- `TAchievementConfig GetAchievementConfigById<TAchievementConfig>(string id)`
+- `void ClearAllAchievements()`
 
 Example:
 
 ```csharp
-public class AchievementStorage : MonoBehaviour
+public class MyCustomGroup : AchievementGroup<MyCustomAchievementGroupConfig>
 {
-    [SerializeField] private AchievementFactory _achievementFactory;
-    [SerializeField] private List<AchievementConfig> _configs;
-    [SerializeField] private List<AchievementHandler> _handlers;
+    public MyCustomGroup(MyCustomAchievementGroupConfig config, IAchievementFactory factory) 
+        : base(config, factory)
+    {}
 
-    private List<Achievement> _achievements = new();
-
-    public void Init()
+    public override void Init()
     {
-        foreach (var config in _configs)
-        {
-            var achievement = _achievementFactory.Create(config);
-            _achievements.Add(achievement);
-        }
-
-        foreach (var achievement in _achievements)
-        {
-            foreach (var handler in _handlers)
-            {
-                if (handler.CanHandle(achievement))
-                    handler.AddAchievement(achievement);
-            }
-        }
-
-        foreach (var handler in _handlers)
-        {
-            handler.Init();
-        }
-    }
-}
-```
-
-This pattern gives you full control over scene setup, allows dependency injection through the Inspector, and avoids tight coupling between systems.
-
-# Achievement Groups
-
-The framework includes a flexible grouping system for achievements. Groups allow you to:
-- Organize related achievements (e.g., Daily, Weekly, Seasonal)
-- Control when and how achievements become active
-- Implement time-based or custom logic for refreshing achievements
-- Persist and restore group state via snapshots
-
-Each group consists of:
-- A **config** (inherits from `AchievementGroupConfig`)
-- A **runtime group** (inherits from `AchievementGroup<TConfig>`)
-
-`AchievementGroupConfig` class provides the minimal data needed to define a group:
-- `Id` — the unique group identifier
-- `Achievements` — the list of `AchievementConfig` objects in the group
-
-You only need to subclass it if your group requires additional parameters.
-
-## Built-in Groups
-
-| Group Type              | Description                                        | Config Type                   | Runtime Class              |
-|-------------------------|----------------------------------------------------|--------------------------------|-----------------------------|
-| Simple Group            | Shows all configured achievements, no logic       | `AchievementGroupConfig`       | `SimpleAchievementGroup`    |
-| Timed Group             | Refreshes its active achievements over time       | `TimedAchievementGroupConfig`  | `TimedAchievementGroup`     |
-
-### `TimedAchievementGroupConfig` includes:
-
-- `ActiveCount` — number of visible achievements per refresh
-- `RefreshTimeRate` — time between refreshes (in seconds)
-- `SaveUnreceivedAchievements` — whether to preserve completed-but-unclaimed achievements
-
-## Snapshots for Groups
-
-All achievement groups support full state persistence via:
-
-```csharp
-IAchievementGroupSnapshot CaptureStateTo();
-void RestoreState(IAchievementGroupSnapshot snapshot);
-```
-
-Snapshots store:
-- The group's ID
-- Achievement snapshots within the group
-- Custom group-specific data (e.g., time of last refresh)
-
-## Creating Custom Groups
-
-You can implement your own achievement group logic by:
-
-1. Creating a config class that inherits from `AchievementGroupConfig`
-2. Creating a runtime group that inherits from `AchievementGroup<TConfig>`
-
-This group only activates when the player's level is high enough.
-```csharp
-[CreateAssetMenu(menuName = "Achievements/Groups/Level Locked")]
-public class LevelLockedGroupConfig : AchievementGroupConfig
-{
-    [SerializeField] private int _requiredPlayerLevel;
-    public int RequiredLevel => _requiredPlayerLevel;
-}
-```
-
-```csharp
-public class LevelLockedAchievementGroup : AchievementGroup<LevelLockedGroupConfig>
-{
-    private bool _unlocked;
-
-    protected override void InitCore()
-    {
-        _unlocked = Player.Level >= Config.RequiredLevel;
-
-        if (_unlocked)
-        {
-            foreach (var config in Config.Achievements)
-                _achievements.Add(_achievementFactory.Create(config));
-        }
-    }
-
-    public override IAchievementGroupSnapshot CaptureStateTo(IAchievementGroupSnapshot snapshot)
-    {
-        if (snapshot is not LevelLockedGroupSnapshot typed)
-            throw new InvalidCastException();
-
-        typed.Id = Config.Id;
-        typed.IsUnlocked = _unlocked;
-
-        foreach (var achievement in _achievements)
-        {
-            var achievementSnapshot = typed.CreateAchievement();
-            achievement.CaptureStateTo(achievementSnapshot);
-            typed.AddAchievement(achievementSnapshot);
-        }
-
-        return typed;
+        // Optional: run custom logic before or after default initialization
+        Debug.Log("Custom Init");
+        base.Init(); // Remove this line if you don't want the base behavior
     }
 
     public override void RestoreState(IAchievementGroupSnapshot snapshot)
     {
-        if (snapshot is not LevelLockedGroupSnapshot typed)
-            throw new InvalidCastException();
+        base.RestoreState(snapshot);
+        Debug.Log("State Restored");
+    }
 
-        _unlocked = typed.IsUnlocked;
-        ClearAllAchievements();
-
-        foreach (var achievementSnapshot in typed.Achievements)
-        {
-            var config = Config.Achievements.FirstOrDefault(c => c.Id == achievementSnapshot.Id);
-            if (config == null)
-                continue;
-
-            var achievement = _achievementFactory.Create(config);
-            achievement.RestoreState(achievementSnapshot);
-            _achievements.Add(achievement);
-        }
+    public override IAchievementGroupSnapshot CaptureStateTo(IAchievementGroupSnapshot snapshot)
+    {
+        Debug.Log("State Captured");
+        return base.CaptureStateTo(snapshot);
     }
 }
 ```
 
-This approach allows you to customize how and when achievements appear or update, without modifying core achievement logic.
+**Note:** The base `Init()` implementation creates achievements based on the configs if they are not already in `_achievements`. If this behavior is not desired, you can skip calling `base.Init()` and implement your own setup.
+
+## UI Integration
+
+While it might be tempting to add UI-specific fields like icons, titles, or descriptions directly to the achievement and group configs, doing so would violate the Single Responsibility Principle and reduce flexibility.
+
+Instead, we recommend using a dedicated UI config layer — for example, by integrating the [ViewConfigurations](https://github.com/CliffCalist/view-configurations) framework. It allows you to define separate ScriptableObject-based configurations specifically for the UI representation of your data.
+
+This approach offers multiple benefits:
+
+- Clear separation of concerns between gameplay logic and UI
+- Easier reuse and testing of configs
+- More scalable and flexible customization options (e.g., per-locale labels, conditional formatting, etc.)
+
+Refer to the [ViewConfigurations](https://github.com/CliffCalist/view-configurations) README for more information on how to structure and link UI configs to achievements or groups.
+
+# Roadmap
+
+- [x] Centralized service for managing all achievement mechanics
+- [ ] Have a feature request? Open an issue or discussion to suggest improvements or extensions.
