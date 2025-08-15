@@ -102,6 +102,15 @@ namespace WhiteArrow.GameAchievements
             }
         }
 
+        public void AddManyGroups(IEnumerable<IAchievementGroup> group)
+        {
+            if (group is null)
+                throw new ArgumentNullException(nameof(group));
+
+            foreach (var g in group)
+                AddGroup(g);
+        }
+
         public void RemoveGroup(string id)
         {
             var group = _groupsById[id];
