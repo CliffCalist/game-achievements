@@ -8,7 +8,9 @@ namespace WhiteArrow.GameAchievements
 
 
 
+        bool HasAchievement(Achievement achievement);
         void AddAchievement(Achievement achievement);
+        void RemoveAchievement(Achievement achievement);
         void RemoveAllAchievements();
     }
 }

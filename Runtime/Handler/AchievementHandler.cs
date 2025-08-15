@@ -6,7 +6,7 @@ namespace WhiteArrow.GameAchievements
 {
     public abstract class AchievementHandler : MonoBehaviour, IAchievementHandler
     {
-        protected readonly List<Achievement> _achievements = new();
+        protected readonly HashSet<Achievement> _achievements = new();
 
 
 
@@ -14,17 +14,22 @@ namespace WhiteArrow.GameAchievements
 
 
 
-        public bool Contains(Achievement achievement)
+        public bool HasAchievement(Achievement achievement)
         {
             return _achievements.Contains(achievement);
         }
 
         public void AddAchievement(Achievement achievement)
         {
-            if (Contains(achievement))
+            if (HasAchievement(achievement))
                 throw new ArgumentException($"{achievement.GetType().Name} is already added to {GetType().Name}");
 
             _achievements.Add(achievement);
+        }
+
+        public void RemoveAchievement(Achievement achievement)
+        {
+            _achievements.Remove(achievement);
         }
 
         public void RemoveAllAchievements()
