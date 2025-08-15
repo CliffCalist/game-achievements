@@ -33,6 +33,50 @@ namespace WhiteArrow.GameAchievements
 
 
 
+        public void RestoreState(IAchievementsServiceSnapshot snapshot)
+        {
+            if (snapshot == null)
+                throw new ArgumentNullException(nameof(snapshot));
+
+            foreach (var achievementSnapshot in snapshot.NonGroupedAchievements)
+            {
+                if (_achievementsById.TryGetValue(achievementSnapshot.Id, out var achievement))
+                    achievement.RestoreState(achievementSnapshot);
+                else
+                    Debug.LogWarning($"Cannot restore {nameof(Achievement)} with ID '{achievementSnapshot.Id}' because it was not found in the service.");
+            }
+
+            foreach (var groupSnapshot in snapshot.Groups)
+            {
+                if (_groupsById.TryGetValue(groupSnapshot.Id, out var group))
+                    group.RestoreState(groupSnapshot);
+                else
+                    Debug.LogWarning($"Cannot restore {nameof(IAchievementGroup)} with ID '{groupSnapshot.Id}' because it was not found in the service.");
+            }
+        }
+
+        public void CaptureStateTo(IAchievementsServiceSnapshot snapshot)
+        {
+            if (snapshot == null)
+                throw new ArgumentNullException(nameof(snapshot));
+
+            foreach (var achievement in _achievementsById.Values)
+            {
+                var achievementSnapshot = snapshot.CreateAchievement();
+                achievement.CaptureStateTo(achievementSnapshot);
+                snapshot.AddNonGroupedAchievement(achievementSnapshot);
+            }
+
+            foreach (var group in _groupsById.Values)
+            {
+                var groupSnapshot = snapshot.CreateGroup();
+                group.CaptureStateTo(groupSnapshot);
+                snapshot.AddGroup(groupSnapshot);
+            }
+        }
+
+
+
         public void AddHandler(IAchievementHandler handler)
         {
             if (UnityCheck.IsDestroyed(handler))
