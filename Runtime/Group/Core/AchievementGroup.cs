@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace WhiteArrow.GameAchievements
 {
-    public abstract class AchievementGroup<TConfig>
+    public class AchievementGroup<TConfig>
         where TConfig : AchievementGroupConfig
     {
         protected readonly TConfig _config;
