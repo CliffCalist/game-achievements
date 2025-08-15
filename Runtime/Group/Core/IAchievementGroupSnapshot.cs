@@ -5,7 +5,7 @@ namespace WhiteArrow.GameAchievements
     public interface IAchievementGroupSnapshot
     {
         string Id { get; set; }
-        IReadOnlyList<IAchievementSnapshot> Achievements { get; }
+        IEnumerable<IAchievementSnapshot> Achievements { get; }
 
 
 
