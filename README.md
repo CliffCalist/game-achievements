@@ -25,7 +25,7 @@ To install via UPM, use "Install package from git URL" and add the following:
 
 ```
 1. https://github.com/CliffCalist/Unity-Tools.git
-2. https://github.com/white-arrow-studio/game-achievements.git
+2. https://github.com/CliffCalist/game-achievements.git
 ```
 
 # Quick Start
