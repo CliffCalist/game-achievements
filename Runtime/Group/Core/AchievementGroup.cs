@@ -96,7 +96,7 @@ namespace WhiteArrow.GameAchievements
             if (IsInited)
                 throw new InvalidOperationException("Group is already inited.");
 
-            foreach (var achievementConfig in _config.Achievements)
+            foreach (var achievementConfig in _config.AllAchievements)
             {
                 var achievement = GetAchievementById(achievementConfig.Id);
                 if (achievement == null)
@@ -120,7 +120,7 @@ namespace WhiteArrow.GameAchievements
 
         public AchievementConfig GetAchievementConfigById(string id)
         {
-            return _config.Achievements.FirstOrDefault(c => c.Id == id);
+            return _config.AllAchievements.FirstOrDefault(c => c.Id == id);
         }
 
         public TAchievementConfig GetAchievementConfigById<TAchievementConfig>(string id)

@@ -77,7 +77,7 @@ namespace WhiteArrow.GameAchievements
                 removedAchievements = ClearNonRewardDispenseAchievements();
             else removedAchievements = ClearAllAchievements();
 
-            var candidates = _config.Achievements
+            var candidates = _config.AllAchievements
                 .OrderBy(_ => Random.value)
                 .Take(_config.ActiveCount);
 
