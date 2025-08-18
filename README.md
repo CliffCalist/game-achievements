@@ -332,6 +332,8 @@ This implementation is serializable and can be persisted using any storage syste
 
 ## Custom Achievement Groups
 
+### Config
+
 To define a custom group, you can either reuse the default `AchievementGroupConfig` or subclass it to extend functionality.
 
 If the default config suits your needs, use it directly. Otherwise, create your own config type:
@@ -345,7 +347,9 @@ public class MyCustomAchievementGroupConfig : AchievementGroupConfig
 }
 ```
 
-Next, create a custom achievement group by inheriting from `AchievementGroup<TConfig>`. You get access to the following fields and properties:
+### Members of AchievementGroup<TConfig>
+
+To define a custom achievement group, inherit from `AchievementGroup<TConfig>`. You get access to the following fields and properties:
 
 - `_config` — the group configuration
 - `_achievementFactory` — the factory used to create achievements
@@ -358,17 +362,18 @@ You can override these virtual methods:
 - `IAchievementGroupSnapshot CaptureStateTo(IAchievementGroupSnapshot snapshot)`
 - `void Init()`
 
-Utility methods available:
+> **Important:** The base `Init()` implementation creates achievements based on the configs if they are not already in `_achievements`.  
+> If this behavior is not desired, you can skip calling `base.Init()` and implement your own setup.
 
-- `Achievement GetAchievementById(string id)`
-- `AchievementConfig GetAchievementConfigById(string id)`
-- `TAchievementConfig GetAchievementConfigById<TAchievementConfig>(string id)`
-- `void ClearAllAchievements()`
+### IDisposable
 
-Example:
+If your custom group subscribes to events or holds unmanaged resources, you can implement `IDisposable`.  
+The `AchievementsService` automatically checks for this interface and calls `Dispose()` when appropriate, allowing for clean resource management.
+
+### Example
 
 ```csharp
-public class MyCustomGroup : AchievementGroup<MyCustomAchievementGroupConfig>
+public class MyCustomGroup : AchievementGroup<MyCustomAchievementGroupConfig>, IDisposable
 {
     public MyCustomGroup(MyCustomAchievementGroupConfig config, IAchievementFactory factory) 
         : base(config, factory)
@@ -376,26 +381,34 @@ public class MyCustomGroup : AchievementGroup<MyCustomAchievementGroupConfig>
 
     public override void Init()
     {
-        // Optional: run custom logic before or after default initialization
-        Debug.Log("Custom Init");
-        base.Init(); // Remove this line if you don't want the base behavior
+        if (IsInited)
+            throw new InvalidOperationException("This group has already been initialized.");
+
+        // Custom logic before or after base.Init()
+    
+        base.Init(); // Remove or use this line depending on your needs
+
+        IsInited = true;
     }
 
     public override void RestoreState(IAchievementGroupSnapshot snapshot)
     {
         base.RestoreState(snapshot);
-        Debug.Log("State Restored");
+        // Custom logic restoring state
     }
 
     public override IAchievementGroupSnapshot CaptureStateTo(IAchievementGroupSnapshot snapshot)
     {
-        Debug.Log("State Captured");
+        // Custom logic capturing state
         return base.CaptureStateTo(snapshot);
+    }
+
+    public void Dispose()
+    {
+        // Unsubscribe from events or cleanup here if needed
     }
 }
 ```
-
-**Note:** The base `Init()` implementation creates achievements based on the configs if they are not already in `_achievements`. If this behavior is not desired, you can skip calling `base.Init()` and implement your own setup.
 
 ## UI Integration
 
