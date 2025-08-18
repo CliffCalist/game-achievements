@@ -138,14 +138,6 @@ All group configs inherit from the base `AchievementGroupConfig`, which includes
 
 The default `AchievementGroupConfig` adds no extra logic — it simply groups achievements, making it suitable for representing categories like "Daily", "Exploration", or "Challenges".
 
-The `TimedAchievementGroupConfig` provides additional behavior for time-based groups:
-
-- `_activeCount`: maximum number of active achievements selected from the group
-- `_refreshTimeRate`: how often to refresh the active achievements (in seconds)
-- `_saveUnreceivedAchievements`: if true, completed but unclaimed achievements are preserved during refresh
-
-This makes it easy to configure rotating daily, weekly, or seasonal achievement groups.
-
 Custom groups can be implemented by inheriting from `AchievementGroup<TConfig>` and creating your own config type.
 
 ## Step 4 — Create and initialize the AchievementsService
@@ -323,17 +315,22 @@ public class MyAchievementsServiceSnapshot : IAchievementsServiceSnapshot
 
 This implementation is serializable and can be persisted using any storage system (e.g. JSON, binary files, PlayerPrefs, cloud saves, etc.).
 
+## TimedAchievementGroup
 
-## Timed Achievement Groups
+The `TimedAchievementGroup` is a built-in achievement group that automatically refreshes its list of active achievements based on time intervals.
 
-The `TimedAchievementGroup` is a built-in implementation of a rotating group that automatically refreshes a subset of achievements based on a timer.
+This group relies on a dedicated configuration asset: `TimedAchievementGroupConfig`, which allows you to specify the following parameters:
 
-This group type uses a ticking mechanism, which means it requires periodic updates (ticks) from an external ticker system.  
-To enable this, the group must be registered using an implementation of the `ITickableAchievementGroupRegistrar` interface.
+1. `int _activeCount` — the maximum number of active achievements at any time
+2. `int _refreshTimeRate` — the refresh rate in seconds (how often the active achievements are rotated)
+3. `bool _saveUnreceivedAchievements` — if true, completed but unclaimed achievements are preserved between refreshes
 
-This registrar is responsible for calling `Tick(float deltaTime)` on the group at regular intervals.
+Creating an instance of `TimedAchievementGroup` is identical to creating a simple group — just pass in the config and achievement factory.
 
-> See the "Tickable Groups" subsection under "Custom Achievement Groups" for more details on implementing and using tickable logic in custom groups.
+> **Important:** This group uses the tickable mechanism.  
+> Before adding a timed group to the `AchievementsService`, make sure to set the tickable registrar via `SetTickableRegistrar(...)`.
+
+For more details on ticking logic, see the section: **Custom Achievement Groups → Tickable Groups**.
 
 ## Custom Achievement Groups
 
