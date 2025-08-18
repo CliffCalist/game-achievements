@@ -413,6 +413,18 @@ _service.SetTickableRegistrar(myRegistrarInstance);
 
 The group will automatically unregister itself when disposed.
 
+### Changing Active Achievements
+
+If a group updates its list of active achievements over time, it must notify the service about the change.  
+To do this, call:
+
+```csharp
+void RaiseActiveAchievementsChanged(IEnumerable<Achievement> old, IEnumerable<Achievement> current)
+```
+
+This informs the `AchievementsService` that the active achievements have changed.  
+The service will automatically remove the old achievements from all handlers and distribute the new ones.
+
 ### Example
 
 ```csharp
