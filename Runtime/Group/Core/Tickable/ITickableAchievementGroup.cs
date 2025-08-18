@@ -1,8 +1,6 @@
-using System;
-
 namespace WhiteArrow.GameAchievements
 {
-    public interface ITickableAchievementGroup : IDisposable
+    public interface ITickableAchievementGroup
     {
         void Tick(float deltaTime);
     }

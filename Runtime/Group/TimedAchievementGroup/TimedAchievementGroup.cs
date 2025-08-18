@@ -6,7 +6,6 @@ namespace WhiteArrow.GameAchievements
 {
     public class TimedAchievementGroup : AchievementGroup<TimedAchievementGroupConfig>, ITickableAchievementGroup
     {
-        private readonly ITickableAchievementGroupRegistrar _tickableRegistrar;
         private DateTime _lastRefreshTime = DateTime.UtcNow;
 
 
@@ -15,11 +14,9 @@ namespace WhiteArrow.GameAchievements
 
 
 
-        public TimedAchievementGroup(TimedAchievementGroupConfig config, IAchievementFactory achievementFactory, ITickableAchievementGroupRegistrar tickableRegistrar)
+        public TimedAchievementGroup(TimedAchievementGroupConfig config, IAchievementFactory achievementFactory)
             : base(config, achievementFactory)
-        {
-            _tickableRegistrar = tickableRegistrar ?? throw new ArgumentNullException(nameof(tickableRegistrar));
-        }
+        { }
 
 
 
@@ -55,7 +52,6 @@ namespace WhiteArrow.GameAchievements
             if (IsInited)
                 throw new InvalidOperationException("Group is already inited.");
 
-            _tickableRegistrar.Register(this);
             IsInited = true;
         }
 
@@ -110,12 +106,6 @@ namespace WhiteArrow.GameAchievements
                 _lastRefreshTime = DateTime.UtcNow;
                 ForceRefresh();
             }
-        }
-
-
-        public void Dispose()
-        {
-            _tickableRegistrar.Unregister(this);
         }
     }
 }

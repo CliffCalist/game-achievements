@@ -8,6 +8,7 @@ namespace WhiteArrow.GameAchievements
     public class AchievementsService : IDisposable
     {
         public readonly IAchievementFactory AchievementFactory;
+        private ITickableAchievementGroupRegistrar _tickableRegistrar;
 
         private readonly HashSet<IAchievementHandler> _handlers = new();
         private readonly Dictionary<string, IAchievementGroup> _groupsById = new();
@@ -77,6 +78,19 @@ namespace WhiteArrow.GameAchievements
 
 
 
+        public void SetTickableRegistrar(ITickableAchievementGroupRegistrar registrar)
+        {
+            _tickableRegistrar = registrar ?? throw new ArgumentNullException(nameof(registrar));
+        }
+
+        private void ThrowIfTickableRegistrarNotSet()
+        {
+            if (_tickableRegistrar == null)
+                throw new NullReferenceException($"{nameof(ITickableAchievementGroupRegistrar)} is not set.");
+        }
+
+
+
         public void AddHandler(IAchievementHandler handler)
         {
             if (UnityCheck.IsDestroyed(handler))
@@ -137,6 +151,12 @@ namespace WhiteArrow.GameAchievements
             if (UnityCheck.IsDestroyed(group))
                 throw new ArgumentNullException(nameof(group));
 
+            if (group is ITickableAchievementGroup tickableGroup)
+            {
+                ThrowIfTickableRegistrarNotSet();
+                _tickableRegistrar.Register(tickableGroup);
+            }
+
             _groupsById[group.Config.Id] = group;
 
             if (IsInited)
@@ -164,11 +184,16 @@ namespace WhiteArrow.GameAchievements
                 return;
             }
 
-            RemoveManyAchievementFromAllHandlers(group.Achievements);
+            if (group is ITickableAchievementGroup tickableGroup)
+            {
+                ThrowIfTickableRegistrarNotSet();
+                _tickableRegistrar.Unregister(tickableGroup);
+            }
 
             if (group is IDisposable disposableGroup)
                 disposableGroup.Dispose();
 
+            RemoveManyAchievementFromAllHandlers(group.Achievements);
             _groupsById.Remove(id);
         }
 
@@ -241,6 +266,12 @@ namespace WhiteArrow.GameAchievements
 
             foreach (var group in _groupsById.Values)
             {
+                if (group is ITickableAchievementGroup tickableGroup)
+                {
+                    ThrowIfTickableRegistrarNotSet();
+                    _tickableRegistrar.Unregister(tickableGroup);
+                }
+
                 if (group is IDisposable disposableGroup)
                     disposableGroup.Dispose();
             }
