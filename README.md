@@ -136,7 +136,7 @@ All group configs inherit from the base `AchievementGroupConfig`, which includes
 - `Id`: a unique identifier for the group
 - `Achievements`: a list of achievement configs included in the group
 
-The default `AchievementGroupConfig` adds no extra logic — it simply groups achievements, making it suitable for representing categories like "Daily", "Exploration", or "Challenges".
+The default `SimpleAchievementGroup` adds no extra logic — it simply groups achievements, making it suitable for representing categories like "Daily", "Exploration", or "Challenges".
 
 Custom groups can be implemented by inheriting from `AchievementGroup<TConfig>` and creating your own config type.
 
@@ -149,7 +149,7 @@ public class MyAchievementSystem : MonoBehaviour
 
     [SerializeField] private List<IAchievementRewardDispencer> _rewardDispencers;
     [SerializeField] private List<AchievementConfig> _achievementConfigs;
-    [SerializeField] private AchievementGroupConfig _simpleGroupConfig;
+    [SerializeField] private SimpleAchievementGroup _simpleGroupConfig;
 
     private AchievementsService _service;
 
