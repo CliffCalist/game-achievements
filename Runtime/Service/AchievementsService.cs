@@ -164,6 +164,8 @@ namespace WhiteArrow.GameAchievements
                 group.Init();
                 AddManyAchievementsToAllHandlers(group.Achievements);
             }
+
+            group.ActiveAchievementsChanged += OnGroupActiveAchievementsChanged;
         }
 
         public void AddManyGroups(IEnumerable<IAchievementGroup> group)
@@ -184,6 +186,10 @@ namespace WhiteArrow.GameAchievements
                 return;
             }
 
+            group.ActiveAchievementsChanged -= OnGroupActiveAchievementsChanged;
+            RemoveManyAchievementFromAllHandlers(group.Achievements);
+            _groupsById.Remove(id);
+
             if (group is ITickableAchievementGroup tickableGroup)
             {
                 ThrowIfTickableRegistrarNotSet();
@@ -192,9 +198,12 @@ namespace WhiteArrow.GameAchievements
 
             if (group is IDisposable disposableGroup)
                 disposableGroup.Dispose();
+        }
 
-            RemoveManyAchievementFromAllHandlers(group.Achievements);
-            _groupsById.Remove(id);
+        private void OnGroupActiveAchievementsChanged(AchievementGroupChangedArgs args)
+        {
+            RemoveManyAchievementFromAllHandlers(args.Previous);
+            AddManyAchievementsToAllHandlers(args.Current);
         }
 
 

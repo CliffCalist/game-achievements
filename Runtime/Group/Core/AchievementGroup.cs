@@ -24,6 +24,10 @@ namespace WhiteArrow.GameAchievements
 
 
 
+        public event Action<AchievementGroupChangedArgs> ActiveAchievementsChanged;
+
+
+
         protected AchievementGroup(TConfig config, IAchievementFactory achievementFactory)
         {
             if (UnityCheck.IsDestroyed(achievementFactory))
@@ -131,9 +135,16 @@ namespace WhiteArrow.GameAchievements
 
 
 
-        protected void ClearAllAchievements()
+        protected IEnumerable<Achievement> ClearAllAchievements()
         {
+            var removed = _achievements.Values.ToArray();
             _achievements.Clear();
+            return removed;
+        }
+
+        protected void RaiseActiveAchievementsChanged(IEnumerable<Achievement> old, IEnumerable<Achievement> current)
+        {
+            ActiveAchievementsChanged?.Invoke(new AchievementGroupChangedArgs(old, current));
         }
     }
 }

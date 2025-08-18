@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Random = UnityEngine.Random;
 
@@ -71,9 +72,10 @@ namespace WhiteArrow.GameAchievements
 
         public void ForceRefresh()
         {
+            IEnumerable<Achievement> removedAchievements = null;
             if (_config.SaveUnreceivedAchievements)
-                ClearNonRewardDispenseAchievements();
-            else ClearAllAchievements();
+                removedAchievements = ClearNonRewardDispenseAchievements();
+            else removedAchievements = ClearAllAchievements();
 
             var candidates = _config.Achievements
                 .OrderBy(_ => Random.value)
@@ -86,15 +88,18 @@ namespace WhiteArrow.GameAchievements
             }
 
             _lastRefreshTime = DateTime.UtcNow;
+            RaiseActiveAchievementsChanged(removedAchievements, _achievements.Values);
             Refreshed?.Invoke();
         }
 
-        private void ClearNonRewardDispenseAchievements()
+        private IEnumerable<Achievement> ClearNonRewardDispenseAchievements()
         {
             var achievementsToRemove = _achievements.Values.Where(a => !a.IsCompleted || a.IsRewardDispensed);
 
             foreach (var achievement in achievementsToRemove)
                 _achievements.Remove(achievement.Config.Id);
+
+            return achievementsToRemove;
         }
 
 
