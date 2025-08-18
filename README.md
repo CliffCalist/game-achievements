@@ -157,9 +157,7 @@ public class MyAchievementSystem : MonoBehaviour
 
     [SerializeField] private List<IAchievementRewardDispencer> _rewardDispencers;
     [SerializeField] private List<AchievementConfig> _achievementConfigs;
-
     [SerializeField] private AchievementGroupConfig _simpleGroupConfig;
-    [SerializeField] private TimedAchievementGroupConfig _timedGroupConfig;
 
     private AchievementsService _service;
 
@@ -171,14 +169,10 @@ public class MyAchievementSystem : MonoBehaviour
         _service.AddManyHandlers(_handlers);
         _service.AddManyAchievementsByConfig(_achievementConfigs);
 
-        // Create and add groups (simple and time-based)
+        // Create and add groups
         // If the factory instance is not accessible, you can use service.AchievementFactory
         var simpleGroup = new SimpleAchievementGroup(_simpleGroupConfig, factory);
         _service.AddGroup(simpleGroup);
-
-        // The myTickableRegistrar enables ticking for time-based groups — see advanced section for more
-        var timedGroup = new TimedAchievementGroup(_timedGroupConfig, factory, new MyTickableRegistrar());
-        _service.AddGroup(timedGroup);
 
         // Initialize the service — this also initializes all groups (starts timers, etc.)
         _service.Init();
@@ -330,6 +324,17 @@ public class MyAchievementsServiceSnapshot : IAchievementsServiceSnapshot
 This implementation is serializable and can be persisted using any storage system (e.g. JSON, binary files, PlayerPrefs, cloud saves, etc.).
 
 
+## Timed Achievement Groups
+
+The `TimedAchievementGroup` is a built-in implementation of a rotating group that automatically refreshes a subset of achievements based on a timer.
+
+This group type uses a ticking mechanism, which means it requires periodic updates (ticks) from an external ticker system.  
+To enable this, the group must be registered using an implementation of the `ITickableAchievementGroupRegistrar` interface.
+
+This registrar is responsible for calling `Tick(float deltaTime)` on the group at regular intervals.
+
+> See the "Tickable Groups" subsection under "Custom Achievement Groups" for more details on implementing and using tickable logic in custom groups.
+
 ## Custom Achievement Groups
 
 ### Config
@@ -370,10 +375,48 @@ You can override these virtual methods:
 If your custom group subscribes to events or holds unmanaged resources, you can implement `IDisposable`.  
 The `AchievementsService` automatically checks for this interface and calls `Dispose()` when appropriate, allowing for clean resource management.
 
+### Tickable Groups
+
+Some achievement groups require regular updates — for example, to track time-limited logic. To support this, the framework provides the `ITickableAchievementGroup` interface.
+
+Any custom group can implement this interface to receive periodic tick updates.
+
+However, the system does not provide a default ticker. Instead, the ticking logic is delegated to the developer. This provides full flexibility for how and where ticking is implemented (e.g. MonoBehaviour, ECS, custom timer services).
+
+To support ticking:
+
+1. Implement the `ITickableAchievementGroup` interface in your group.
+2. Provide a class that implements `ITickableAchievementGroupRegistrar`.
+3. When the group is added to the `AchievementsService`, the service will automatically register it with the registrar.
+4. If no registrar is set in the service when a tickable group is added, an exception will be thrown.
+
+Example interface signatures:
+
+```csharp
+public interface ITickableAchievementGroup
+{
+    void Tick(float deltaTime);
+}
+
+public interface ITickableAchievementGroupRegistrar
+{
+    void Register(ITickableAchievementGroup group);
+    void Unregister(ITickableAchievementGroup group);
+}
+```
+
+To set the registrar on the service:
+
+```csharp
+_service.SetTickableRegistrar(myRegistrarInstance);
+```
+
+The group will automatically unregister itself when disposed.
+
 ### Example
 
 ```csharp
-public class MyCustomGroup : AchievementGroup<MyCustomAchievementGroupConfig>, IDisposable
+public class MyCustomGroup : AchievementGroup<MyCustomAchievementGroupConfig>, IDisposable, ITickableAchievementGroup
 {
     public MyCustomGroup(MyCustomAchievementGroupConfig config, IAchievementFactory factory) 
         : base(config, factory)
@@ -401,6 +444,11 @@ public class MyCustomGroup : AchievementGroup<MyCustomAchievementGroupConfig>, I
     {
         // Custom logic capturing state
         return base.CaptureStateTo(snapshot);
+    }
+
+    public void Tick(float deltaTime)
+    {
+        // Ticking logic for the group
     }
 
     public void Dispose()
