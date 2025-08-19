@@ -202,6 +202,9 @@ namespace WhiteArrow.GameAchievements
 
         private void OnGroupActiveAchievementsChanged(AchievementGroupChangedArgs args)
         {
+            if(!IsInited)
+                return;
+
             RemoveManyAchievementFromAllHandlers(args.Previous);
             AddManyAchievementsToAllHandlers(args.Current);
         }
