@@ -98,8 +98,7 @@ namespace WhiteArrow.GameAchievements
 
             foreach (var achievementConfig in _config.AllAchievements)
             {
-                var achievement = GetAchievementById(achievementConfig.Id);
-                if (achievement == null)
+                if (!TryGetAchievementById(achievementConfig.Id, out var achievement))
                 {
                     achievement = _achievementFactory.Create(achievementConfig);
                     _achievements.Add(achievement.Config.Id, achievement);
@@ -114,6 +113,11 @@ namespace WhiteArrow.GameAchievements
         public Achievement GetAchievementById(string id)
         {
             return _achievements[id];
+        }
+
+        public bool TryGetAchievementById(string id, out Achievement achievement)
+        {
+            return _achievements.TryGetValue(id, out achievement);
         }
 
 
