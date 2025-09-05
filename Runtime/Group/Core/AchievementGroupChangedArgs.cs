@@ -4,15 +4,15 @@ namespace WhiteArrow.GameAchievements
 {
     public readonly struct AchievementGroupChangedArgs
     {
-        public IEnumerable<Achievement> Previous { get; }
-        public IEnumerable<Achievement> Current { get; }
+        public IEnumerable<Achievement> RemovedAchievements { get; }
+        public IEnumerable<Achievement> AddedAchievement { get; }
 
 
 
-        public AchievementGroupChangedArgs(IEnumerable<Achievement> previous, IEnumerable<Achievement> current)
+        public AchievementGroupChangedArgs(IEnumerable<Achievement> removed, IEnumerable<Achievement> added)
         {
-            Previous = previous;
-            Current = current;
+            RemovedAchievements = removed;
+            AddedAchievement = added;
         }
     }
 }
