@@ -355,7 +355,7 @@ To define a custom achievement group, inherit from `AchievementGroup<TConfig>`. 
 
 - `_config` — the group configuration
 - `_achievementFactory` — the factory used to create achievements
-- `_achievements` — the list of active achievements
+- `Achievements` — read-only access to the list of currently active achievements
 - `IsInited` — whether the group has been initialized
 
 You can override these virtual methods:
@@ -412,13 +412,15 @@ The group will automatically unregister itself when disposed.
 
 ### Changing Active Achievements
 
-If a group changes which achievements are currently active (e.g. on refresh or rotation), it must notify the service about the difference. To do this, call:
+Groups no longer have direct access to modify the internal list of active achievements.
 
-```csharp
-void RaiseActiveAchievementsChanged(IEnumerable<Achievement> removed, IEnumerable<Achievement> added)
-```
+To change the collection, follow these steps:
+1. Determine which achievements should be removed and which should be added.
+2. Construct an `AchievementGroupUpdate` object with the `RemovedAchievements` and `AddedAchievements` collections.
+   - You may pass `null` for either collection if no changes are needed in that direction.
+3. Call `ApplyActiveAchievementsChange(update)` to apply the change.
 
-This informs the `AchievementsService` which achievements were removed from the group and which were newly added. The service will automatically update all handlers accordingly.
+This method ensures internal consistency and automatically triggers necessary handlers and event notifications.
 
 ### Example
 
@@ -461,6 +463,18 @@ public class MyCustomGroup : AchievementGroup<MyCustomAchievementGroupConfig>, I
     public void Dispose()
     {
         // Unsubscribe from events or cleanup here if needed
+    }
+
+    public void ReplaceAchievements(List<Achievement> newAchievements)
+    {
+        var removed = Achievements;
+        var added = newAchievements;
+
+        ApplyActiveAchievementsChange(new AchievementGroupUpdate
+        {
+            RemovedAchievements = removed,
+            AddedAchievements = added
+        });
     }
 }
 ```

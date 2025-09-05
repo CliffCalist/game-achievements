@@ -10,7 +10,7 @@ namespace WhiteArrow.GameAchievements
 
 
 
-        public event Action<AchievementGroupChangedArgs> ActiveAchievementsChanged;
+        public event Action<AchievementGroupUpdate> ActiveAchievementsChanged;
 
 
 

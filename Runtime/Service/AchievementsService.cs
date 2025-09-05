@@ -200,16 +200,16 @@ namespace WhiteArrow.GameAchievements
                 disposableGroup.Dispose();
         }
 
-        private void OnGroupActiveAchievementsChanged(AchievementGroupChangedArgs args)
+        private void OnGroupActiveAchievementsChanged(AchievementGroupUpdate args)
         {
             if (!IsInited)
                 return;
 
-            if (args.RemovedAchievements != null)
-                RemoveManyAchievementFromAllHandlers(args.RemovedAchievements);
+            if (args.Removed != null)
+                RemoveManyAchievementFromAllHandlers(args.Removed);
 
-            if (args.AddedAchievement != null)
-                AddManyAchievementsToAllHandlers(args.AddedAchievement);
+            if (args.Added != null)
+                AddManyAchievementsToAllHandlers(args.Added);
         }
 
 

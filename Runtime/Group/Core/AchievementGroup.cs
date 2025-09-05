@@ -11,7 +11,7 @@ namespace WhiteArrow.GameAchievements
         protected readonly TConfig _config;
 
         protected readonly IAchievementFactory _achievementFactory;
-        protected readonly Dictionary<string, Achievement> _achievements = new();
+        private readonly Dictionary<string, Achievement> _achievements = new();
 
 
 
@@ -24,7 +24,7 @@ namespace WhiteArrow.GameAchievements
 
 
 
-        public event Action<AchievementGroupChangedArgs> ActiveAchievementsChanged;
+        public event Action<AchievementGroupUpdate> ActiveAchievementsChanged;
 
 
 
@@ -138,16 +138,30 @@ namespace WhiteArrow.GameAchievements
 
 
 
-        protected IEnumerable<Achievement> ClearAllAchievements()
-        {
-            var removed = _achievements.Values.ToArray();
-            _achievements.Clear();
-            return removed;
-        }
 
-        protected void RaiseActiveAchievementsChanged(IEnumerable<Achievement> old, IEnumerable<Achievement> current)
+        protected void ApplyActiveAchievementsChange(AchievementGroupUpdate update)
         {
-            ActiveAchievementsChanged?.Invoke(new AchievementGroupChangedArgs(old, current));
+            if (update.Removed != null)
+            {
+                foreach (var removed in update.Removed)
+                {
+                    if (_achievements.ContainsKey(removed.Config.Id))
+                        _achievements.Remove(removed.Config.Id);
+                    else Debug.LogWarning($"Cannot remove {nameof(Achievement)} with ID '{removed.Config.Id}' because it was not found in the group.");
+                }
+            }
+
+            if (update.Added != null)
+            {
+                foreach (var added in update.Added)
+                {
+                    if (!_achievements.ContainsKey(added.Config.Id))
+                        _achievements.Add(added.Config.Id, added);
+                    else Debug.LogWarning($"Cannot add {nameof(Achievement)} with ID '{added.Config.Id}' because it already exists in the group.");
+                }
+            }
+
+            ActiveAchievementsChanged?.Invoke(update);
         }
     }
 }

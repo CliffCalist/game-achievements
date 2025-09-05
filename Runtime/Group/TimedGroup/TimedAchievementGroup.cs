@@ -72,34 +72,32 @@ namespace WhiteArrow.GameAchievements
 
         public void ForceRefresh()
         {
-            IEnumerable<Achievement> removedAchievements = null;
+            IEnumerable<Achievement> toRemove = null;
             if (_config.SaveUnreceivedAchievements)
-                removedAchievements = ClearNonRewardDispenseAchievements();
-            else removedAchievements = ClearAllAchievements();
+                toRemove = CollectNonRewardDispenseAchievements();
+            else toRemove = Achievements;
 
             var candidates = _config.AllAchievements
                 .OrderBy(_ => Random.value)
                 .Take(_config.ActiveCount);
 
+            var toAdd = new List<Achievement>();
             foreach (var config in candidates)
             {
                 var achievement = _achievementFactory.Create(config);
-                _achievements.Add(achievement.Config.Id, achievement);
+                toAdd.Add(achievement);
             }
 
             _lastRefreshTime = DateTime.UtcNow;
-            RaiseActiveAchievementsChanged(removedAchievements, _achievements.Values);
+
+            var updateDTO = new AchievementGroupUpdate(toRemove, toAdd);
+            ApplyActiveAchievementsChange(updateDTO);
             Refreshed?.Invoke();
         }
 
-        private IEnumerable<Achievement> ClearNonRewardDispenseAchievements()
+        private IEnumerable<Achievement> CollectNonRewardDispenseAchievements()
         {
-            var achievementsToRemove = _achievements.Values.Where(a => !a.IsCompleted || a.IsRewardDispensed);
-
-            foreach (var achievement in achievementsToRemove)
-                _achievements.Remove(achievement.Config.Id);
-
-            return achievementsToRemove;
+            return Achievements.Where(a => !a.IsCompleted || a.IsRewardDispensed);
         }
 
 
