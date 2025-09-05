@@ -205,8 +205,11 @@ namespace WhiteArrow.GameAchievements
             if (!IsInited)
                 return;
 
-            RemoveManyAchievementFromAllHandlers(args.RemovedAchievements);
-            AddManyAchievementsToAllHandlers(args.AddedAchievement);
+            if (args.RemovedAchievements != null)
+                RemoveManyAchievementFromAllHandlers(args.RemovedAchievements);
+
+            if (args.AddedAchievement != null)
+                AddManyAchievementsToAllHandlers(args.AddedAchievement);
         }
 
 
