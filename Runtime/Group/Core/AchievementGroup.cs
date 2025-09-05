@@ -53,9 +53,9 @@ namespace WhiteArrow.GameAchievements
                 if (UnityCheck.IsDestroyed(achievementSnapshot))
                     throw new ArgumentNullException(nameof(achievementSnapshot));
 
-                var achievement = GetAchievementById(achievementSnapshot.Id);
-
-                if (achievement == null)
+                if (TryGetAchievementById(achievementSnapshot.Id, out var achievement))
+                    achievement.RestoreState(achievementSnapshot);
+                else
                 {
                     var achievementConfig = GetAchievementConfigById(achievementSnapshot.Id);
                     if (achievementConfig == null)
@@ -68,7 +68,6 @@ namespace WhiteArrow.GameAchievements
                     achievement.RestoreState(achievementSnapshot);
                     _achievements.Add(achievement.Config.Id, achievement);
                 }
-                else achievement.RestoreState(achievementSnapshot);
             }
         }
 
