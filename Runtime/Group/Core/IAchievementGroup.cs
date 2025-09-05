@@ -7,11 +7,12 @@ namespace WhiteArrow.GameAchievements
     {
         AchievementGroupConfig Config { get; }
         IReadOnlyCollection<Achievement> Achievements { get; }
+        bool IsAllAchievementsCompleted { get; }
 
 
 
-        public event Action<AchievementGroupUpdate> ActiveAchievementsChanged;
-
+        event Action<AchievementGroupUpdate> ActiveAchievementsChanged;
+        event Action AllAchievementsCompleted;
 
 
         void RestoreState(IAchievementGroupSnapshot snapshot);

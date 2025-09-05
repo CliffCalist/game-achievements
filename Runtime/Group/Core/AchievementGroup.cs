@@ -21,10 +21,12 @@ namespace WhiteArrow.GameAchievements
         public TConfig Config => _config;
 
         public IReadOnlyCollection<Achievement> Achievements => _achievements.Values;
+        public bool IsAllAchievementsCompleted => _achievements.Values.All(a => a.IsCompleted);
 
 
 
         public event Action<AchievementGroupUpdate> ActiveAchievementsChanged;
+        public event Action AllAchievementsCompleted;
 
 
 
@@ -66,9 +68,13 @@ namespace WhiteArrow.GameAchievements
 
                     achievement = _achievementFactory.Create(achievementConfig);
                     achievement.RestoreState(achievementSnapshot);
+                    achievement.Completed += OnAchievementCompleted;
                     _achievements.Add(achievement.Config.Id, achievement);
                 }
             }
+
+            if (IsAllAchievementsCompleted)
+                AllAchievementsCompleted?.Invoke();
         }
 
         public virtual IAchievementGroupSnapshot CaptureStateTo(IAchievementGroupSnapshot snapshot)
@@ -100,11 +106,15 @@ namespace WhiteArrow.GameAchievements
                 if (!TryGetAchievementById(achievementConfig.Id, out var achievement))
                 {
                     achievement = _achievementFactory.Create(achievementConfig);
+                    achievement.Completed += OnAchievementCompleted;
                     _achievements.Add(achievement.Config.Id, achievement);
                 }
             }
 
             IsInited = true;
+
+            if (IsAllAchievementsCompleted)
+                AllAchievementsCompleted?.Invoke();
         }
 
 
@@ -146,7 +156,10 @@ namespace WhiteArrow.GameAchievements
                 foreach (var removed in update.Removed)
                 {
                     if (_achievements.ContainsKey(removed.Config.Id))
+                    {
+                        removed.Completed -= OnAchievementCompleted;
                         _achievements.Remove(removed.Config.Id);
+                    }
                     else Debug.LogWarning($"Cannot remove {nameof(Achievement)} with ID '{removed.Config.Id}' because it was not found in the group.");
                 }
             }
@@ -156,12 +169,24 @@ namespace WhiteArrow.GameAchievements
                 foreach (var added in update.Added)
                 {
                     if (!_achievements.ContainsKey(added.Config.Id))
+                    {
+                        added.Completed += OnAchievementCompleted;
                         _achievements.Add(added.Config.Id, added);
+                    }
                     else Debug.LogWarning($"Cannot add {nameof(Achievement)} with ID '{added.Config.Id}' because it already exists in the group.");
                 }
             }
 
             ActiveAchievementsChanged?.Invoke(update);
+
+            if (IsAllAchievementsCompleted)
+                AllAchievementsCompleted?.Invoke();
+        }
+
+        private void OnAchievementCompleted()
+        {
+            if (IsAllAchievementsCompleted)
+                AllAchievementsCompleted?.Invoke();
         }
     }
 }
