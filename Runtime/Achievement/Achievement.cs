@@ -95,8 +95,8 @@ namespace WhiteArrow.GameAchievements
             if (value <= 0)
                 throw new ArgumentOutOfRangeException(nameof(value));
 
-            value = Math.Min(value, _config.TargetProgress - _progress);
-            _progress += value;
+            value = Math.Min(value, _config.TargetProgress);
+            _progress = value;
 
             ProgressChanged?.Invoke();
 
