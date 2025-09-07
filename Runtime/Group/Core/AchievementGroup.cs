@@ -22,11 +22,13 @@ namespace WhiteArrow.GameAchievements
 
         public IReadOnlyCollection<Achievement> Achievements => _achievements.Values;
         public bool IsAllAchievementsCompleted => _achievements.Values.All(a => a.IsCompleted);
+        public bool IsAllRewardsDispenced => _achievements.Values.All(a => a.IsRewardDispensed);
 
 
 
         public event Action<AchievementGroupUpdate> ActiveAchievementsChanged;
         public event Action AllAchievementsCompleted;
+        public event Action AllRewardsDispenced;
 
 
 
@@ -69,12 +71,16 @@ namespace WhiteArrow.GameAchievements
                     achievement = _achievementFactory.Create(achievementConfig);
                     achievement.RestoreState(achievementSnapshot);
                     achievement.Completed += OnAchievementCompleted;
+                    achievement.RewardDispensed += OnRewardDispenced;
                     _achievements.Add(achievement.Config.Id, achievement);
                 }
             }
 
             if (IsAllAchievementsCompleted)
                 AllAchievementsCompleted?.Invoke();
+
+            if (IsAllRewardsDispenced)
+                AllRewardsDispenced?.Invoke();
         }
 
         public virtual IAchievementGroupSnapshot CaptureStateTo(IAchievementGroupSnapshot snapshot)
@@ -107,6 +113,7 @@ namespace WhiteArrow.GameAchievements
                 {
                     achievement = _achievementFactory.Create(achievementConfig);
                     achievement.Completed += OnAchievementCompleted;
+                    achievement.RewardDispensed += OnRewardDispenced;
                     _achievements.Add(achievement.Config.Id, achievement);
                 }
             }
@@ -115,6 +122,9 @@ namespace WhiteArrow.GameAchievements
 
             if (IsAllAchievementsCompleted)
                 AllAchievementsCompleted?.Invoke();
+
+            if (IsAllRewardsDispenced)
+                AllRewardsDispenced?.Invoke();
         }
 
 
@@ -158,6 +168,7 @@ namespace WhiteArrow.GameAchievements
                     if (_achievements.ContainsKey(removed.Config.Id))
                     {
                         removed.Completed -= OnAchievementCompleted;
+                        removed.RewardDispensed -= OnRewardDispenced;
                         _achievements.Remove(removed.Config.Id);
                     }
                     else Debug.LogWarning($"Cannot remove {nameof(Achievement)} with ID '{removed.Config.Id}' because it was not found in the group.");
@@ -171,6 +182,7 @@ namespace WhiteArrow.GameAchievements
                     if (!_achievements.ContainsKey(added.Config.Id))
                     {
                         added.Completed += OnAchievementCompleted;
+                        added.RewardDispensed += OnRewardDispenced;
                         _achievements.Add(added.Config.Id, added);
                     }
                     else Debug.LogWarning($"Cannot add {nameof(Achievement)} with ID '{added.Config.Id}' because it already exists in the group.");
@@ -187,6 +199,12 @@ namespace WhiteArrow.GameAchievements
         {
             if (IsAllAchievementsCompleted)
                 AllAchievementsCompleted?.Invoke();
+        }
+
+        private void OnRewardDispenced()
+        {
+            if (IsAllRewardsDispenced)
+                AllRewardsDispenced?.Invoke();
         }
     }
 }
