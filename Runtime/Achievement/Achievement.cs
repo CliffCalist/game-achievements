@@ -29,7 +29,7 @@ namespace WhiteArrow.GameAchievements
 
         public Achievement(AchievementConfig config, IAchievementRewardDispencer rewardDispencer)
         {
-            if (UnityCheck.IsDestroyed(rewardDispencer))
+            if (rewardDispencer == null)
                 throw new ArgumentNullException(nameof(rewardDispencer));
 
             _config = config ?? throw new ArgumentNullException(nameof(config));
@@ -49,7 +49,7 @@ namespace WhiteArrow.GameAchievements
 
         public void RestoreState(IAchievementSnapshot snapshot)
         {
-            if (UnityCheck.IsDestroyed(snapshot))
+            if (snapshot == null)
                 throw new ArgumentNullException(nameof(snapshot));
 
             if (snapshot.Id != _config.Id)
@@ -61,7 +61,7 @@ namespace WhiteArrow.GameAchievements
 
         public IAchievementSnapshot CaptureStateTo(IAchievementSnapshot snapshot)
         {
-            if (UnityCheck.IsDestroyed(snapshot))
+            if (snapshot == null)
                 throw new ArgumentNullException(nameof(snapshot));
 
             snapshot.Id = _config.Id;

@@ -24,8 +24,7 @@ Game Achievements is a flexible and extensible achievement system for Unity. It 
 To install via UPM, use "Install package from git URL" and add the following:
 
 ```
-1. https://github.com/CliffCalist/Unity-Tools.git
-2. https://github.com/CliffCalist/game-achievements.git
+https://github.com/CliffCalist/game-achievements.git
 ```
 
 # Quick Start

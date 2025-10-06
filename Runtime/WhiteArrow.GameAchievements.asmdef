@@ -1,9 +1,7 @@
 {
     "name": "WhiteArrow.GameAchievements",
     "rootNamespace": "WhiteArrow.GameAchievements",
-    "references": [
-        "GUID:e3a1b3532d5ca4d54be21cb53828b508"
-    ],
+    "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

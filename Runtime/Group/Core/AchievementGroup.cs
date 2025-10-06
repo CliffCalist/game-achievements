@@ -34,7 +34,7 @@ namespace WhiteArrow.GameAchievements
 
         protected AchievementGroup(TConfig config, IAchievementFactory achievementFactory)
         {
-            if (UnityCheck.IsDestroyed(achievementFactory))
+            if (achievementFactory == null)
                 throw new ArgumentNullException(nameof(achievementFactory));
 
             _config = config ?? throw new ArgumentNullException(nameof(config));
@@ -45,7 +45,7 @@ namespace WhiteArrow.GameAchievements
 
         public virtual void RestoreState(IAchievementGroupSnapshot snapshot)
         {
-            if (UnityCheck.IsDestroyed(snapshot))
+            if (snapshot == null)
                 throw new ArgumentNullException(nameof(snapshot));
 
             if (snapshot.Id != _config.Id)
@@ -54,7 +54,7 @@ namespace WhiteArrow.GameAchievements
             var achievementSnapshots = snapshot.Achievements;
             foreach (var achievementSnapshot in achievementSnapshots)
             {
-                if (UnityCheck.IsDestroyed(achievementSnapshot))
+                if (achievementSnapshot == null)
                     throw new ArgumentNullException(nameof(achievementSnapshot));
 
                 if (TryGetAchievementById(achievementSnapshot.Id, out var achievement))
@@ -85,7 +85,7 @@ namespace WhiteArrow.GameAchievements
 
         public virtual IAchievementGroupSnapshot CaptureStateTo(IAchievementGroupSnapshot snapshot)
         {
-            if (UnityCheck.IsDestroyed(snapshot))
+            if (snapshot == null)
                 throw new ArgumentNullException(nameof(snapshot));
 
             snapshot.Id = _config.Id;

@@ -26,7 +26,7 @@ namespace WhiteArrow.GameAchievements
 
         public AchievementsService(IAchievementFactory factory)
         {
-            if (UnityCheck.IsDestroyed(factory))
+            if (factory == null)
                 throw new ArgumentNullException(nameof(factory));
 
             AchievementFactory = factory;
@@ -93,7 +93,7 @@ namespace WhiteArrow.GameAchievements
 
         public void AddHandler(IAchievementHandler handler)
         {
-            if (UnityCheck.IsDestroyed(handler))
+            if (handler == null)
                 throw new ArgumentNullException(nameof(handler));
 
             _handlers.Add(handler);
@@ -148,7 +148,7 @@ namespace WhiteArrow.GameAchievements
 
         public void AddGroup(IAchievementGroup group)
         {
-            if (UnityCheck.IsDestroyed(group))
+            if (group == null)
                 throw new ArgumentNullException(nameof(group));
 
             if (group is ITickableAchievementGroup tickableGroup)
