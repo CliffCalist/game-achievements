@@ -226,6 +226,8 @@ namespace WhiteArrow.GameAchievements
             if (IsInited)
                 throw new InvalidOperationException($"{nameof(AchievementsService)} is already inited.");
 
+            IsInited = true;
+
             foreach (var group in _groupsById.Values)
             {
                 group.Init();
@@ -234,8 +236,6 @@ namespace WhiteArrow.GameAchievements
 
             foreach (var handler in _handlers)
                 handler.Init();
-
-            IsInited = true;
         }
 
 

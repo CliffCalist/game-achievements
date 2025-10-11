@@ -6,11 +6,11 @@ namespace WhiteArrow.GameAchievements
 {
     public abstract class AchievementHandler : MonoBehaviour, IAchievementHandler
     {
-        private bool _isInited;
         protected readonly HashSet<Achievement> _achievements = new();
 
 
 
+        protected bool _isInited { get; private set; }
         public abstract Type TargetConfigType { get; }
 
 
