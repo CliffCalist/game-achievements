@@ -163,9 +163,8 @@ namespace WhiteArrow.GameAchievements
             {
                 group.Init();
                 AddManyAchievementsToAllHandlers(group.Achievements);
+                group.ActiveAchievementsChanged += OnGroupActiveAchievementsChanged;
             }
-
-            group.ActiveAchievementsChanged += OnGroupActiveAchievementsChanged;
         }
 
         public void AddManyGroups(IEnumerable<IAchievementGroup> group)
@@ -232,6 +231,7 @@ namespace WhiteArrow.GameAchievements
             {
                 group.Init();
                 AddManyAchievementsToAllHandlers(group.Achievements);
+                group.ActiveAchievementsChanged += OnGroupActiveAchievementsChanged;
             }
 
             foreach (var handler in _handlers)
