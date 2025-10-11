@@ -6,12 +6,24 @@ namespace WhiteArrow.GameAchievements
 {
     public abstract class AchievementHandler : MonoBehaviour, IAchievementHandler
     {
+        private bool _isInited;
         protected readonly HashSet<Achievement> _achievements = new();
 
 
 
         public abstract Type TargetConfigType { get; }
 
+
+        void IAchievementHandler.Init()
+        {
+            if (_isInited)
+                throw new InvalidOperationException("Init called twice");
+
+            Init();
+            _isInited = true;
+        }
+
+        protected abstract void Init();
 
 
         public bool HasAchievement(Achievement achievement)

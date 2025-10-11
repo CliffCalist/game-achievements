@@ -232,6 +232,9 @@ namespace WhiteArrow.GameAchievements
                 AddManyAchievementsToAllHandlers(group.Achievements);
             }
 
+            foreach (var handler in _handlers)
+                handler.Init();
+
             IsInited = true;
         }
 
@@ -239,6 +242,9 @@ namespace WhiteArrow.GameAchievements
 
         private bool TryAddAchievementToHandler(Achievement achievement, IAchievementHandler handler)
         {
+            if (!IsInited)
+                return false;
+
             if (handler.TargetConfigType == achievement.Config.GetType())
             {
                 handler.AddAchievement(achievement);

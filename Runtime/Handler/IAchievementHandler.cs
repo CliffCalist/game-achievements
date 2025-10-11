@@ -7,7 +7,7 @@ namespace WhiteArrow.GameAchievements
         Type TargetConfigType { get; }
 
 
-
+        void Init();
         bool HasAchievement(Achievement achievement);
         void AddAchievement(Achievement achievement);
         void RemoveAchievement(Achievement achievement);
