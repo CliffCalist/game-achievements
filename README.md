@@ -33,31 +33,31 @@ https://github.com/CliffCalist/game-achievements.git
 
 Each reward consists of two parts:
 
-- `RewardConfig`: a ScriptableObject that holds configuration data
-- `IRewardDispencer`: interface that defines how the reward is actually granted
+- `AchievementRewardConfig`: a ScriptableObject that holds configuration data
+- `IAchievementRewardDispencer`: interface that defines how the reward is actually granted
 
-The base `RewardConfig` already includes `Amount`. Is a numeric value representing how much reward to give.
+The base `AchievementRewardConfig` already includes `Amount`. Is a numeric value representing how much reward to give.
 These field don’t need to be duplicated in your subclass — just inherit and add what’s specific to your reward type.
 
 For example, a reward that grants a currency might look like this:
 
 ```csharp
 [CreateAssetMenu(menuName = "Achievements/Rewards/Currency")]
-public class CurrencyRewardConfig : RewardConfig
+public class CurrencyRewardConfig : AchievementRewardConfig
 {
     [SerializeField] private string _currencyId;
     public string CurrencyId => _currencyId;
 }
 ```
 
-Then implement the actual reward logic by creating a class that implements `IRewardDispencer`. The config arrives as the base `RewardConfig`, so cast it to your type:
+Then implement the actual reward logic by creating a class that implements `IAchievementRewardDispencer`. The config arrives as the base `AchievementRewardConfig`, so cast it to your type:
 
 ```csharp
-public class CurrencyRewardDispencer : IRewardDispencer
+public class CurrencyRewardDispencer : IAchievementRewardDispencer
 {
     public Type TargetConfigType {get; } = typeof(CurrencyRewardConfig);
 
-    public void DispenseReward(RewardConfig rewardConfig)
+    public void DispenseReward(AchievementRewardConfig rewardConfig)
     {
         if (rewardConfig is not CurrencyRewardConfig config)
             throw new InvalidCastException($"Expected {nameof(CurrencyRewardConfig)}, got {rewardConfig.GetType().Name}");
