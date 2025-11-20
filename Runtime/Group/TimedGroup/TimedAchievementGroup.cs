@@ -7,7 +7,7 @@ namespace WhiteArrow.GameAchievements
 {
     public class TimedAchievementGroup : AchievementGroup<TimedAchievementGroupConfig>, ITickableAchievementGroup
     {
-        private DateTime _lastRefreshTime = DateTime.UtcNow;
+        private DateTime _lastRefreshTime;
 
 
 
