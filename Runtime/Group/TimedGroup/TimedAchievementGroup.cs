@@ -75,7 +75,7 @@ namespace WhiteArrow.GameAchievements
             IEnumerable<Achievement> toRemove = null;
             if (_config.SaveUnreceivedAchievements)
                 toRemove = CollectNonRewardDispenseAchievements();
-            else toRemove = Achievements.ToList();
+            else toRemove = new List<Achievement>(Achievements);
 
             var candidates = _config.AllAchievements
                 .OrderBy(_ => Random.value)
