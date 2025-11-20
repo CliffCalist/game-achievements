@@ -16,5 +16,6 @@ namespace WhiteArrow.GameAchievements
 
         IAchievementSnapshot CreateAchievement();
         IAchievementGroupSnapshot CreateGroup();
+        ITimedAchievementGroupSnapshot CreateTimedGroup();
     }
 }

@@ -70,7 +70,10 @@ namespace WhiteArrow.GameAchievements
 
             foreach (var group in _groupsById.Values)
             {
-                var groupSnapshot = snapshot.CreateGroup();
+                var groupSnapshot = group is TimedAchievementGroup
+                    ? snapshot.CreateTimedGroup()
+                    : snapshot.CreateGroup();
+
                 group.CaptureStateTo(groupSnapshot);
                 snapshot.AddGroup(groupSnapshot);
             }
