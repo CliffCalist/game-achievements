@@ -47,7 +47,8 @@ namespace WhiteArrow.GameAchievements
                     Debug.LogWarning($"Cannot restore {nameof(Achievement)} with ID '{achievementSnapshot.Id}' because it was not found in the service.");
             }
 
-            foreach (var groupSnapshot in snapshot.Groups)
+            var groups = snapshot.Groups.Concat(snapshot.TimedGroups);
+            foreach (var groupSnapshot in groups)
             {
                 if (_groupsById.TryGetValue(groupSnapshot.Id, out var group))
                     group.RestoreState(groupSnapshot);
@@ -70,12 +71,18 @@ namespace WhiteArrow.GameAchievements
 
             foreach (var group in _groupsById.Values)
             {
-                var groupSnapshot = group is TimedAchievementGroup
-                    ? snapshot.CreateTimedGroup()
-                    : snapshot.CreateGroup();
-
-                group.CaptureStateTo(groupSnapshot);
-                snapshot.AddGroup(groupSnapshot);
+                if (group is TimedAchievementGroup timedGroup)
+                {
+                    var groupSnapshot = snapshot.CreateTimedGroup();
+                    group.CaptureStateTo(groupSnapshot);
+                    snapshot.AddTimedGroup(groupSnapshot);
+                }
+                else
+                {
+                    var groupSnapshot = snapshot.CreateGroup();
+                    group.CaptureStateTo(groupSnapshot);
+                    snapshot.AddGroup(groupSnapshot);
+                }
             }
         }
 
