@@ -102,6 +102,14 @@ Example handler:
 ```csharp
 public class KillEnemiesAchievementHandler : AchievementHandler
 {
+    public override Type TargetConfigType { get; } = typeof(KillEnemiesAchievement);
+
+
+    protected override void Init()
+    {
+        // ...
+    }
+
     public void OnEnemyKilled(string killedType)
     {
         foreach (var achievement in _achievements)
