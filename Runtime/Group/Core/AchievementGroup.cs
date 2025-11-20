@@ -163,7 +163,8 @@ namespace WhiteArrow.GameAchievements
         {
             if (update.Removed != null)
             {
-                foreach (var removed in update.Removed)
+                var toRemove = update.Removed.ToList();
+                foreach (var removed in toRemove)
                 {
                     if (_achievements.ContainsKey(removed.Config.Id))
                     {
@@ -177,7 +178,8 @@ namespace WhiteArrow.GameAchievements
 
             if (update.Added != null)
             {
-                foreach (var added in update.Added)
+                var toAdd = update.Added.ToList();
+                foreach (var added in toAdd)
                 {
                     if (!_achievements.ContainsKey(added.Config.Id))
                     {
